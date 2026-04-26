@@ -199,8 +199,13 @@ class VRTravelApp {
                     }, 50);
                 }, 1000);
             } else {
-                // Standard VR transition
-                this.fadeToView(this.vrView, () => this.openVR());
+                // Check if location requires opening in a new tab (bypasses security blocks)
+                if (this.currentLocation && this.currentLocation.forceNewTab) {
+                    window.open(this.currentLocation.vrLink, '_blank');
+                } else {
+                    // Standard internal VR view for other locations
+                    this.fadeToView(this.vrView, () => this.openVR());
+                }
             }
         });
         

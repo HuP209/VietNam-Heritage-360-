@@ -66,6 +66,7 @@ const locations = [
     lng: 108.2494,
     image: 'assets/hoang_sa_museum_bg.jpg',
     vrLink: 'https://duan.vrtour360.vn/NhaTrungBayHoangSa/',
+    forceNewTab: true,
     hook: 'Bản hùng ca biển đảo thiêng liêng của Tổ quốc...',
     description: 'Nơi lưu giữ những minh chứng lịch sử hào hùng, khẳng định chủ quyền thiêng liêng trên biển Đông.'
   },
@@ -177,7 +178,8 @@ const locations = [
     lat: 21.0368,
     lng: 105.8347,
     image: 'assets/lang_bac_bg.jpg',
-    vrLink: 'https://sanpham.starglobal3d.vn/smart-heritage-3d/lang-chu-tich-ho-chi-minh/',
+    vrLink: 'https://sanpham.starglobal3d.vn/smart-heritage-3d/lang-chu-tich-ho-chi-minh/?startscene=scene_01_lang_bac_(1)&startactions=lookat(0,0,120,0,0);',
+    forceNewTab: true,
     hook: 'Trái tim của Thủ đô và niềm tự hào dân tộc...',
     description: 'Công trình kiến trúc thiêng liêng giữa Quảng trường Ba Đình lịch sử, nơi an nghỉ của vị lãnh tụ kính yêu của nhân dân Việt Nam.'
   },

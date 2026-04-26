@@ -563,24 +563,28 @@ h1, h2, h3 {
 }
 
 .btn-back {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.1);
   border: 1px solid rgba(255,255,255,0.2);
   color: white;
-  padding: 10px 20px;
-  border-radius: 20px;
+  padding: 10px 25px;
+  border-radius: 25px;
   cursor: pointer;
-  position: absolute;
-  top: -80px;
-  left: 0;
-  backdrop-filter: blur(5px);
+  position: fixed; /* Changed to fixed to stay in corner */
+  top: 25px;
+  right: 25px;
+  backdrop-filter: blur(15px);
   transition: all 0.3s ease;
   font-family: var(--font-premium);
   letter-spacing: 1px;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .btn-back:hover {
-  background: rgba(255,255,255,0.15);
-  border-color: #fff;
+  background: rgba(255,255,255,0.2);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 15px var(--color-accent-glow);
+  transform: translateY(-2px);
 }
 
 /* =========================================
@@ -639,17 +643,17 @@ h1, h2, h3 {
 .btn-back-vr {
   position: fixed;
   top: 25px;
-  left: 25px;
+  left: 25px; /* Back to top-left for VR mode */
   z-index: 2147483647;
   background: rgba(0,0,0,0.6);
   border: 1px solid rgba(255,255,255,0.2);
   color: white;
-  padding: 10px 20px;
+  padding: 10px 25px;
   border-radius: 25px;
   cursor: pointer;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(15px);
   font-family: var(--font-premium);
-  transition: background 0.3s;
+  transition: all 0.3s ease;
   pointer-events: all !important;
   display: none; /* Hide globally by default */
 }
