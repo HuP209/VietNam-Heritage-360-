@@ -74,7 +74,7 @@ const locations = [
     name: 'Hội An',
     lat: 15.8794, 
     lng: 108.3331,
-    image: 'https://images.unsplash.com/photo-1559592413-7cec4d0cae2b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+    image: 'assets/hoi_an_bg.jpg',
     vrLink: 'https://vr360.com.vn/projects/hoian-metaverse/',
     hook: 'Phố cổ rêu phong và những đêm lồng đèn lung linh...',
     description: 'Dạo bước trên những con phố nhỏ, bạn sẽ như lạc vào một dòng chảy xuyên thời gian từ hàng trăm năm trước.'
