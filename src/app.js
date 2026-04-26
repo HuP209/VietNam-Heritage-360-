@@ -37,6 +37,17 @@ class VRTravelApp {
         this.btnZoomIn = document.getElementById('btn-zoom-in');
         this.btnZoomOut = document.getElementById('btn-zoom-out');
         
+        // Header
+        this.appHeader = document.querySelector('.app-header');
+        
+        // Dashboard
+        this.dashboardOverlay = document.getElementById('dashboard-overlay');
+        this.btnShowDashboard = document.getElementById('btn-show-dashboard');
+        this.btnCloseDashboard = document.getElementById('btn-close-dashboard');
+        
+        // Memorial elements
+        this.memorialMessage = document.getElementById('memorial-message');
+        
         window.vrAppInstance = this;
         
         this.init();
@@ -101,7 +112,12 @@ class VRTravelApp {
             
             const customIcon = L.divIcon({
                 className: isIsland ? 'custom-marker island-marker' : 'custom-marker',
-                html: `
+                html: isIsland ? `
+                    <div class="flag-pole"></div>
+                    <div class="island-flag"></div>
+                    <div class="marker-core"></div>
+                    <div class="marker-pulse"></div>
+                ` : `
                     <div class="marker-core"></div>
                     <div class="marker-pulse"></div>
                 `,
@@ -170,9 +186,22 @@ class VRTravelApp {
             });
         });
         
-        // Story to VR
+        // Story to VR or Memorial
         this.btnStartVr.addEventListener('click', () => {
-            this.fadeToView(this.vrView, () => this.openVR());
+            if (this.currentLocation && this.currentLocation.isIsland) {
+                // Island memorial interaction
+                this.btnStartVr.style.opacity = '0';
+                setTimeout(() => {
+                    this.btnStartVr.style.display = 'none';
+                    this.memorialMessage.style.display = 'block';
+                    setTimeout(() => {
+                        this.memorialMessage.style.opacity = '1';
+                    }, 50);
+                }, 1000);
+            } else {
+                // Standard VR transition
+                this.fadeToView(this.vrView, () => this.openVR());
+            }
         });
         
         // VR to Map
@@ -211,6 +240,22 @@ class VRTravelApp {
                 }, 800);
             }, 1000);
         });
+
+        // Dashboard Toggle
+        this.btnShowDashboard.addEventListener('click', () => {
+            this.dashboardOverlay.classList.add('active');
+        });
+        
+        this.btnCloseDashboard.addEventListener('click', () => {
+            this.dashboardOverlay.classList.remove('active');
+        });
+        
+        // Close dashboard with Escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.dashboardOverlay.classList.contains('active')) {
+                this.dashboardOverlay.classList.remove('active');
+            }
+        });
         
         // Handle Window Resize
         window.addEventListener('resize', () => {
@@ -220,7 +265,9 @@ class VRTravelApp {
 
     fadeToView(targetView, callback) {
         // Show black overlay
-        this.transitionOverlay.classList.add('active');
+        if (this.transitionOverlay) {
+            this.transitionOverlay.classList.add('active');
+        }
         
         setTimeout(() => {
             // Hide all absolute views
@@ -228,6 +275,13 @@ class VRTravelApp {
             this.mapView.classList.remove('active');
             this.storyView.classList.remove('active');
             this.vrView.classList.remove('active');
+            
+            // Header visibility logic
+            if (targetView === this.heroView) {
+                this.appHeader.classList.remove('visible');
+            } else {
+                this.appHeader.classList.add('visible');
+            }
             
             // Execute callback (e.g. data setting)
             if(callback) callback();
@@ -237,7 +291,9 @@ class VRTravelApp {
             
             // Hide black overlay
             setTimeout(() => {
-                this.transitionOverlay.classList.remove('active');
+                if (this.transitionOverlay) {
+                    this.transitionOverlay.classList.remove('active');
+                }
                 if (this.map && targetView === this.mapView) {
                     this.map.invalidateSize();
                 }
@@ -255,6 +311,18 @@ class VRTravelApp {
         this.storyTitle.textContent = location.name;
         this.storyHook.textContent = `"${location.hook}"`;
         this.storyDesc.textContent = location.description;
+        
+        // Reset Memorial state
+        this.memorialMessage.style.display = 'none';
+        this.memorialMessage.style.opacity = '0';
+        this.btnStartVr.style.display = 'inline-block';
+        this.btnStartVr.style.opacity = '1';
+        
+        if (location.isIsland) {
+            this.btnStartVr.textContent = '✦ Tưởng Niệm Các Anh Hùng ✦';
+        } else {
+            this.btnStartVr.textContent = '✦ Bắt Đầu Hành Trình ✦';
+        }
         
         // Reset animations
         this.storyContent.classList.remove('animate-in');
