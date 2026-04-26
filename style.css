@@ -1,0 +1,626 @@
+:root {
+  --color-bg-dark: #0A192F;
+  --color-text-light: #FFFFFF;
+  --color-accent: #FADB5F; /* Heritage Tone / Gold */
+  --color-accent-glow: rgba(250, 219, 95, 0.6);
+  --color-overlay: rgba(10, 25, 47, 0.7);
+  
+  --font-title: 'Agbalumo', cursive;
+  --font-body: 'Times New Roman', Times, serif;
+  --font-premium: 'Cormorant Garamond', serif; /* Replacement for Lavonia Classy */
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg-dark);
+  color: var(--color-text-light);
+  font-family: var(--font-body);
+  overflow: hidden; /* Prevent scrolling, full app experience */
+}
+
+/* Typography */
+h1, h2, h3 {
+  font-family: var(--font-title);
+  font-weight: normal;
+}
+
+.view-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1s ease-in-out;
+  z-index: 1;
+}
+
+.view-container.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+/* =========================================
+   0. HEADER (Cố định, Minimal, Cao cấp)
+========================================= */
+.app-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  padding: 20px 40px;
+  z-index: 100;
+  pointer-events: none; /* Let clicks pass through if empty space */
+  display: flex;
+  justify-content: flex-start;
+}
+
+.header-logo {
+  font-family: var(--font-premium);
+  font-size: 1.8rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  background: linear-gradient(45deg, #FADB5F, #FFF8D6, #FADB5F);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 10px rgba(250, 219, 95, 0.3);
+  pointer-events: auto;
+  backdrop-filter: blur(5px);
+  padding: 5px 15px;
+  border-radius: 8px;
+  background-color: rgba(0,0,0,0.1);
+}
+
+/* =========================================
+   1. HERO VIEW (Cinematic Intro)
+========================================= */
+#hero-view {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: #000;
+}
+
+.hero-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-image: url('./assets/bg.jpg'); 
+  background-size: cover;
+  background-position: center center;
+  z-index: 1;
+  animation: bgZoomIn 20s ease-out forwards;
+}
+
+@keyframes bgZoomIn {
+  from { transform: scale(1.1); }
+  to { transform: scale(1); }
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  /* Gradient mờ ảo từ giữa xuống dưới */
+  background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%);
+  z-index: 2;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 3;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px;
+  text-align: center;
+  padding-bottom: 80px; /* Cách đáy 80px */
+}
+
+.hero-text {
+  font-size: 1.5rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+  opacity: 0;
+  transform: translateY(40px);
+  text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+}
+
+.hero-signature {
+  font-family: var(--font-premium);
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: #FFD700;
+  margin-top: 30px;
+  margin-bottom: 40px;
+  font-style: italic;
+  opacity: 0;
+  transform: translateY(40px);
+  text-shadow: 0 0 15px rgba(255,215,0,0.5);
+}
+
+.btn-explore {
+  background: linear-gradient(135deg, #FFD700, #FADB5F);
+  color: #000;
+  border: none;
+  padding: 15px 50px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  font-family: var(--font-premium);
+  letter-spacing: 1px;
+  border-radius: 50px; /* rounded-full */
+  cursor: pointer;
+  transition: all 0.4s ease;
+  opacity: 0;
+  transform: translateY(40px);
+  box-shadow: 0 5px 20px rgba(255,215,0,0.4);
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-explore:hover {
+  background: linear-gradient(135deg, #FFF080, #FFD700);
+  box-shadow: 0 8px 25px rgba(255,215,0,0.6);
+  transform: translateY(0) scale(1.05);
+}
+
+.btn-explore:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Animations cho Text Hero (Chạy ngay khi vào trang) */
+#hero-view.active #hero-text-1 { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards; }
+#hero-view.active #hero-text-2 { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s forwards; }
+#hero-view.active #hero-text-3 { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 2.5s forwards; }
+#hero-view.active #btn-explore { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 3.5s forwards; }
+
+@keyframes slideUpFade {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================
+   2. MAP VIEW (Leaflet)
+========================================= */
+#map-view {
+  background: #000;
+}
+
+.leaflet-map {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background: #000;
+}
+
+/* Ẩn các label, control mặc định của leaflet */
+.leaflet-control-zoom, .leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Custom Markers trên Map */
+.custom-marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.marker-core {
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 15px var(--color-accent);
+  position: relative;
+  transition: transform 0.3s ease;
+}
+
+.marker-pulse {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 30px; height: 30px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid var(--color-accent);
+  animation: mapPulse 2s infinite ease-out;
+  pointer-events: none;
+}
+
+@keyframes mapPulse {
+  0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.8; }
+  100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+}
+
+/* Hover mượt hơn */
+.custom-marker:hover .marker-core {
+  transform: scale(1.3);
+  background-color: #fff;
+  box-shadow: 0 0 20px #fff;
+}
+
+/* Marker riêng biệt cho Đảo */
+.island-marker .marker-core {
+  background-color: #fff;
+  width: 8px; height: 8px;
+  box-shadow: 0 0 10px #fff;
+}
+.island-marker .marker-pulse {
+  border-color: #fff;
+  width: 20px; height: 20px;
+}
+.island-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  font-family: var(--font-body) !important;
+  font-size: 0.9rem !important;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 5px #000;
+  pointer-events: none;
+}
+
+/* Tooltip Leaflet custom */
+.leaflet-tooltip.custom-tooltip {
+  background: rgba(10, 25, 47, 0.85);
+  border: 1px solid var(--color-accent-glow);
+  color: #fff;
+  font-family: var(--font-premium);
+  font-size: 1.2rem;
+  backdrop-filter: blur(5px);
+  padding: 5px 15px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}
+.leaflet-tooltip-top:before,
+.leaflet-tooltip-bottom:before,
+.leaflet-tooltip-left:before,
+.leaflet-tooltip-right:before {
+  border: none !important; /* Bỏ mũi tên mặc định */
+}
+
+/* Custom Zoom Controls */
+.custom-zoom-controls {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000; /* Trên map */
+}
+
+.zoom-btn {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--color-text-light);
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+.zoom-btn:hover {
+  background: rgba(255,255,255,0.2);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  box-shadow: 0 0 15px var(--color-accent-glow);
+}
+
+/* =========================================
+   3. STORY VIEW
+========================================= */
+#story-view {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.story-bg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background-size: cover;
+  background-position: center;
+  transition: background-image 1s ease;
+  z-index: 1;
+  /* Cinematic slow zoom effect */
+  animation: storyPan 30s infinite alternate linear;
+}
+
+@keyframes storyPan {
+  from { transform: scale(1.05); }
+  to { transform: scale(1.15); }
+}
+
+.story-overlay {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(circle at center, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
+  z-index: 2;
+}
+
+.story-content {
+  position: relative;
+  z-index: 3;
+  width: 90%;
+  max-width: 800px;
+  text-align: center;
+}
+
+.story-title {
+  font-size: 5rem;
+  color: var(--color-accent);
+  margin-bottom: 20px;
+  text-shadow: 0 5px 25px rgba(0,0,0,0.9);
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s;
+}
+
+.story-hook {
+  font-size: 1.8rem;
+  font-family: var(--font-premium);
+  font-style: italic;
+  margin-bottom: 20px;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 1.2s ease 1s;
+}
+
+.story-desc {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  color: #ddd;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 1.2s ease 1.5s;
+}
+
+.story-content.animate-in .story-title { opacity: 1; transform: translateY(0); }
+.story-content.animate-in .story-hook { opacity: 1; }
+.story-content.animate-in .story-desc { opacity: 1; transform: translateY(0); }
+
+.btn-primary {
+  background: linear-gradient(135deg, #FADB5F, #D4AF37);
+  color: #000;
+  border: none;
+  padding: 16px 35px;
+  font-size: 1.2rem;
+  font-family: var(--font-title);
+  border-radius: 30px;
+  cursor: pointer;
+  margin-top: 40px;
+  box-shadow: 0 5px 20px var(--color-accent-glow);
+  transition: all 0.3s ease;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.story-content.animate-in .btn-primary {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 1s ease 2s; 
+}
+
+.btn-primary:hover {
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 25px var(--color-accent-glow);
+}
+
+.btn-back {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 20px;
+  cursor: pointer;
+  position: absolute;
+  top: -80px;
+  left: 0;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  font-family: var(--font-premium);
+  letter-spacing: 1px;
+}
+
+.btn-back:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: #fff;
+}
+
+/* =========================================
+   4. VR VIEW
+========================================= */
+#vr-view {
+  background: #000;
+}
+
+#vr-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  position: absolute;
+  top: 0; left: 0;
+  z-index: 1;
+}
+
+.vr-loading {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2;
+  transition: opacity 0.8s ease;
+}
+
+.spinner {
+  width: 60px; height: 60px;
+  border: 3px solid rgba(255,255,255,0.1);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+.vr-ui-top {
+  position: absolute;
+  top: 80px; /* Dưới header cố định */
+  left: 30px; right: 30px;
+  display: flex;
+  justify-content: flex-end; /* Push location name and audio to right if needed, or space-between */
+  gap: 20px;
+  align-items: center;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.vr-ui-top > * { pointer-events: auto; }
+
+.btn-back-vr {
+  position: fixed;
+  top: 25px;
+  left: 25px;
+  z-index: 2147483647;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  font-family: var(--font-premium);
+  transition: background 0.3s;
+  pointer-events: all !important;
+  display: none; /* Hide globally by default */
+}
+
+body.in-vr .btn-back-vr {
+  display: block; /* Show only when VR is active */
+}
+
+.btn-back-vr:hover { background: rgba(0,0,0,0.8); border-color: var(--color-accent); transform: scale(1.05); }
+
+.vr-ui-fading {
+  transition: opacity 1s ease;
+}
+
+#vr-view.vr-loaded .vr-ui-fading {
+  opacity: 0;
+  pointer-events: none;
+}
+
+body.in-vr .app-header {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.vr-location-name {
+  background: rgba(0,0,0,0.6);
+  padding: 8px 25px;
+  border-radius: 25px;
+  backdrop-filter: blur(10px);
+  color: var(--color-accent);
+  font-family: var(--font-title);
+  letter-spacing: 1px;
+}
+
+.btn-audio {
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white;
+  width: 45px; height: 45px;
+  border-radius: 50%;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  font-size: 1.2rem;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s;
+}
+.btn-audio:hover { border-color: var(--color-accent); }
+
+.vr-ui-bottom {
+  position: absolute;
+  bottom: 40px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 90%;
+  max-width: 650px;
+  pointer-events: none;
+}
+
+.vr-guide-box {
+  background: rgba(10, 25, 47, 0.7);
+  border: 1px solid rgba(250, 219, 95, 0.3);
+  border-left: 4px solid var(--color-accent);
+  border-radius: 12px;
+  padding: 15px 25px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  backdrop-filter: blur(15px);
+  box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+
+.guide-avatar {
+  width: 55px; height: 55px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff, #eee);
+  padding: 3px;
+  border: 2px solid var(--color-accent);
+}
+
+.guide-text {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  font-style: italic;
+  font-family: var(--font-premium);
+  color: #fff;
+}
+
+/* =========================================
+   5. TRANSITION OVERLAY
+========================================= */
+.transition-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #000;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease-in-out;
+}
+
+.transition-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .hero-text { font-size: 1.2rem; }
+  .story-title { font-size: 3.5rem; }
+  .story-hook { font-size: 1.4rem; }
+  .header-logo { font-size: 1.4rem; }
+  .vr-guide-box { flex-direction: column; text-align: center; }
+  .vr-ui-top { flex-direction: column; gap: 15px; top: 60px; }
+  .vr-location-name { order: -1; }
+}

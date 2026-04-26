@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hành Trình VR 360° Việt Nam</title>
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Agbalumo&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-logo">VietNam Heritage 360° <span style="font-family: sans-serif; font-size: 1.5rem; margin-left: 5px;">🇻🇳</span></div>
+    </header>
+
+    <!-- Global VR Back Button -->
+    <button class="btn-back-vr" id="btn-back-vr" onclick="if(window.handleVrBack) window.handleVrBack()">← Quay lại Bản đồ</button>
+
+    <!-- 0. Hero View (Mở đầu) -->
+    <div id="hero-view" class="view-container active">
+        <div class="hero-bg"></div>
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <p class="hero-text" id="hero-text-1">Việt Nam – Nơi bản sắc ngàn năm hòa quyện cùng khát vọng vươn tầm thế giới.</p>
+            <p class="hero-text" id="hero-text-2">Chúng tôi tự hào viết tiếp chương mới của lịch sử bằng sự kiên cường trong ý chí và sự tinh tế trong tâm hồn, biến nguồn lực di sản thành động lực cho tương lai.</p>
+            <p class="hero-signature" id="hero-text-3">Stem AI-A1K50</p>
+            
+            <button class="btn-explore" id="btn-explore">👉 Khám Phá</button>
+        </div>
+    </div>
+
+    <!-- 1. Map View -->
+    <div id="map-view" class="view-container">
+        <!-- Div chứa bản đồ Leaflet -->
+        <div id="leaflet-map" class="leaflet-map"></div>
+        
+        <!-- Custom Zoom Controls -->
+        <div class="custom-zoom-controls">
+            <button id="btn-zoom-in" class="zoom-btn">+</button>
+            <button id="btn-zoom-out" class="zoom-btn">−</button>
+        </div>
+    </div>
+
+    <!-- 2. Story View -->
+    <div id="story-view" class="view-container">
+        <div class="story-bg" id="story-bg"></div>
+        <div class="story-overlay"></div>
+        
+        <div class="story-content">
+            <button class="btn-back" id="btn-back-story">← Quay lại Bản đồ</button>
+            <h1 class="story-title" id="story-title">Tên Địa Danh</h1>
+            <p class="story-hook" id="story-hook"></p>
+            <p class="story-desc" id="story-desc"></p>
+            
+            <button class="btn-primary mt-8" id="btn-start-vr">Bắt đầu hành trình 👉</button>
+        </div>
+    </div>
+
+    <!-- 3. VR View -->
+    <div id="vr-view" class="view-container">
+        <div class="vr-loading" id="vr-loading">
+            <div class="spinner"></div>
+            <p>Đang tải không gian thực tế ảo...</p>
+        </div>
+        
+        <iframe id="vr-iframe" sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation" allowfullscreen allow="xr-spatial-tracking; gyroscope; accelerometer" src=""></iframe>
+        
+        <div class="vr-ui-fading">
+            <div class="vr-ui-top">
+                <h2 class="vr-location-name" id="vr-location-name">Tên Địa Danh</h2>
+                <button class="btn-audio" id="btn-audio" title="Bật/Tắt Nhạc">🔊</button>
+            </div>
+            
+            <div class="vr-ui-bottom">
+            <div class="vr-guide-box">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Guide&backgroundColor=transparent" alt="Guide" class="guide-avatar">
+                <p class="guide-text" id="guide-text">Hãy nhìn sang bên trái, bạn sẽ thấy những dãy núi đá vôi…</p>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Black Overlay for transitions -->
+    <div id="transition-overlay" class="transition-overlay"></div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <script src="./src/data.js"></script>
+    <script src="./src/app.js"></script>
+</body>
+</html>
