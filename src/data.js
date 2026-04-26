@@ -160,5 +160,45 @@ const locations = [
     vrLink: 'https://360.holomia.com/tour/29L4EHYO3VIIvad1M?startscene=0',
     hook: 'Vẻ đẹp kỳ ảo của "Hạ Long trên cạn"...',
     description: 'Quần thể danh thắng Ninh Bình với hệ thống núi đá vôi hùng vĩ và những ngôi chùa tâm linh thanh tịnh giữa thiên nhiên tuyệt mỹ.'
+  },
+  {
+    id: 'pacbo',
+    name: 'Pác Bó (Cao Bằng)',
+    lat: 22.9791,
+    lng: 106.0528,
+    image: 'assets/pac_bo_bg.jpg',
+    vrLink: 'https://store360.vingg.vn/cao-bang/pac-bo/',
+    hook: 'Nơi cội nguồn cách mạng giữa đại ngàn Việt Bắc...',
+    description: 'Di tích quốc gia đặc biệt với suối Lê-nin trong vắt và núi Các-mác hùng vĩ, nơi Bác Hồ đã sống và làm việc sau 30 năm bôn ba tìm đường cứu nước.'
+  },
+  {
+    id: 'langbac',
+    name: 'Lăng Chủ tịch Hồ Chí Minh',
+    lat: 21.0368,
+    lng: 105.8347,
+    image: 'assets/lang_bac_bg.jpg',
+    vrLink: 'https://sanpham.starglobal3d.vn/smart-heritage-3d/lang-chu-tich-ho-chi-minh/',
+    hook: 'Trái tim của Thủ đô và niềm tự hào dân tộc...',
+    description: 'Công trình kiến trúc thiêng liêng giữa Quảng trường Ba Đình lịch sử, nơi an nghỉ của vị lãnh tụ kính yêu của nhân dân Việt Nam.'
+  },
+  {
+    id: 'vanmieu',
+    name: 'Văn Miếu – Quốc Tử Giám',
+    lat: 21.0285,
+    lng: 105.8355,
+    image: 'assets/van_mieu_bg.jpg',
+    vrLink: 'https://vr360.com.vn/projects/van-mieu-quoc-tu-giam/#duonglo',
+    hook: 'Nơi tôn vinh đạo học và trí tuệ Việt Nam...',
+    description: 'Trường Đại học đầu tiên của Việt Nam với kiến trúc cổ kính, nơi lưu giữ những tấm bia Tiến sĩ vinh danh những bậc hiền tài của đất nước.'
+  },
+  {
+    id: 'hoalo',
+    name: 'Di tích Nhà tù Hoả Lò',
+    lat: 21.0253,
+    lng: 105.8465,
+    image: 'assets/hoa_lo_bg.jpg',
+    vrLink: 'https://store360.vingg.vn/ha-noi/hoan-kiem/nhatuhoalo/',
+    hook: 'Nơi ý chí thép nở hoa giữa ngục tù tăm tối...',
+    description: 'Di tích lịch sử minh chứng cho tinh thần quật cường của các chiến sĩ cách mạng, được mệnh danh là "Địa ngục trần gian" giữa lòng Hà Nội.'
   }
 ];
