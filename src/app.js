@@ -157,7 +157,29 @@ class VRTravelApp {
                     this.fadeToView(this.storyView, () => this.openStory(loc));
                 }, 1000);
             });
+
+            // Add decorative island cluster for archipelagos (outside click handler)
+            if (loc.isIsland) {
+                this.addDecorativeIslands(loc.lat, loc.lng, loc.id === 'hoang_sa_island' ? 15 : 30);
+            }
         });
+    }
+
+    addDecorativeIslands(centerLat, centerLng, count) {
+        const spread = count > 20 ? 2.5 : 1.2; // wider for Truong Sa
+        for (let i = 0; i < count; i++) {
+            const latOff = (Math.random() - 0.5) * spread;
+            const lngOff = (Math.random() - 0.5) * spread;
+            
+            L.circle([centerLat + latOff, centerLng + lngOff], {
+                radius: 800 + Math.random() * 2500,
+                color: '#FADB5F',
+                weight: 0,
+                fillColor: '#FADB5F',
+                fillOpacity: 0.15 + Math.random() * 0.35,
+                className: 'decorative-island-glow'
+            }).addTo(this.map);
+        }
     }
     
     bindEvents() {

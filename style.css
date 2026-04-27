@@ -1023,3 +1023,13 @@ body.in-vr .app-header {
   margin-right: 4px;
   filter: drop-shadow(0 0 5px rgba(250, 219, 95, 0.3));
 }
+
+/* Decorative Islands Glow */
+.decorative-island-glow {
+    filter: blur(2px);
+    transition: opacity 0.5s ease;
+}
+
+.decorative-island-glow:hover {
+    fill-opacity: 0.8 !important;
+}

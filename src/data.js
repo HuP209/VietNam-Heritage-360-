@@ -114,8 +114,8 @@ const locations = [
   {
     id: 'truong_sa_island',
     name: 'QĐ. Trường Sa',
-    lat: 10.0,
-    lng: 114.0,
+    lat: 10.7,
+    lng: 115.8,
     isIsland: true,
     image: 'assets/truong_sa_bg.jpg',
     vrLink: 'https://duan.vrtour360.vn/NhaTrungBayHoangSa/', /* Tạm dùng link Hoàng Sa nếu chưa có Trường Sa */
