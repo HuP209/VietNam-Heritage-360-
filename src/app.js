@@ -48,6 +48,24 @@ class VRTravelApp {
         // Memorial elements
         this.memorialMessage = document.getElementById('memorial-message');
         
+        // Charts Reference
+        this.charts = {};
+        this.dashboardDataInterval = null;
+        
+        // Visit Tracking (User interaction based)
+        this.visitCounts = JSON.parse(localStorage.getItem('vn_heritage_visits')) || {};
+        this.initializeVisitData();
+
+        // Rating Feature State
+        this.userHasRated = localStorage.getItem('vn_heritage_rated_v6') === 'true';
+        this.ratingData = JSON.parse(localStorage.getItem('vn_heritage_ratings_v6')) || [0, 0, 0, 0, 0]; 
+        this.realTimeInterval = null;
+        
+        // Rating Elements
+        this.ratingContainer = document.getElementById('rating-container');
+        this.chartResultContainer = document.getElementById('chart-result-container');
+        this.kpiRating = document.getElementById('kpi-rating');
+        
         window.vrAppInstance = this;
         
         this.init();
@@ -146,6 +164,9 @@ class VRTravelApp {
 
             marker.on('click', () => {
                 if (this.mode === 'vr' || this.mode === 'story') return; // Prevent double click
+                
+                // Track visit (Record click)
+                this.recordVisit(loc.id);
                 
                 // Zoom in effect before transition
                 this.map.flyTo([loc.lat, loc.lng], 9, {
@@ -271,10 +292,14 @@ class VRTravelApp {
         // Dashboard Toggle
         this.btnShowDashboard.addEventListener('click', () => {
             this.dashboardOverlay.classList.add('active');
+            document.body.classList.add('dashboard-active');
+            this.initDashboard();
         });
         
         this.btnCloseDashboard.addEventListener('click', () => {
             this.dashboardOverlay.classList.remove('active');
+            document.body.classList.remove('dashboard-active');
+            if (this.dashboardDataInterval) clearInterval(this.dashboardDataInterval);
         });
         
         // Close dashboard with Escape key
@@ -282,6 +307,15 @@ class VRTravelApp {
             if (e.key === 'Escape' && this.dashboardOverlay.classList.contains('active')) {
                 this.dashboardOverlay.classList.remove('active');
             }
+        });
+
+        // Emoji Rating Events
+        const emojiBtns = document.querySelectorAll('.emoji-btn');
+        emojiBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const score = parseInt(btn.getAttribute('data-score'));
+                this.handleRating(score);
+            });
         });
         
         // Handle Window Resize
@@ -360,6 +394,188 @@ class VRTravelApp {
         }, 300);
     }
     
+    initDashboard() {
+        // Reset and show initial data
+        this.updateDashboardData();
+        
+        // Handle Rating vs Chart Visibility
+        if (this.userHasRated) {
+            this.ratingContainer.style.display = 'none';
+            this.chartResultContainer.style.display = 'block';
+            this.chartResultContainer.style.opacity = '1';
+        } else {
+            this.ratingContainer.style.display = 'flex';
+            this.ratingContainer.style.opacity = '1';
+            this.chartResultContainer.style.display = 'none';
+        }
+
+        // Wait for the scale/fade animation to finish before initializing charts
+        setTimeout(() => {
+            this.initDashboardCharts();
+        }, 400);
+    }
+
+    updateDashboardData() {
+        // Calculate dynamic weighted average
+        const avgRating = this.calculateWeightedAverage();
+        const popularLoc = this.getMostVisitedLocation();
+        const trend = "+11.5";
+
+        this.kpiRating.textContent = `${avgRating}/5`;
+        document.getElementById('kpi-popular').textContent = popularLoc;
+        document.getElementById('kpi-trend').textContent = `${trend}%`;
+        
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+        document.getElementById('last-updated').textContent = `Cập nhật lần cuối: ${dateStr} 00:00`;
+    }
+
+    initDashboardCharts() {
+        const satisfactionCanvas = document.getElementById('satisfactionChart');
+        if (!satisfactionCanvas) return;
+
+        const ctxPie = satisfactionCanvas.getContext('2d');
+        const ctxBar = document.getElementById('visitsChart').getContext('2d');
+
+        // Destroy existing charts if they exist
+        if (this.charts.satisfaction) this.charts.satisfaction.destroy();
+        if (this.charts.visits) this.charts.visits.destroy();
+
+        // Satisfaction Donut Chart (5 Levels)
+        this.charts.satisfaction = new Chart(ctxPie, {
+            type: 'doughnut',
+            data: {
+                labels: ['1 sao', '2 sao', '3 sao', '4 sao', '5 sao'],
+                datasets: [{
+                    data: [...this.ratingData],
+                    backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#a3e635', '#22c55e'],
+                    borderWidth: 0,
+                    hoverOffset: 15
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                animation: {
+                    duration: 1500,
+                    easing: 'easeOutQuart'
+                },
+                layout: { padding: 15 },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { 
+                            color: '#cbd5e1', 
+                            padding: 20, 
+                            usePointStyle: true, 
+                            font: { size: 14 }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        padding: 12,
+                        bodyFont: { size: 12 }
+                    }
+                }
+            }
+        });
+
+        // Visits Bar Chart (Based on USER CLICKS)
+        const regions = ['Miền Bắc', 'Miền Trung', 'Miền Nam'];
+        const regionalData = regions.map(r => {
+            // Sum of clicks for all locations in this region
+            return locations
+                .filter(l => l.region === r)
+                .reduce((sum, l) => sum + (this.visitCounts[l.id] || 0), 0);
+        });
+
+        this.charts.visits = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: regions,
+                datasets: [{
+                    label: 'Lượt tham quan',
+                    data: regionalData,
+                    backgroundColor: [
+                        'rgba(250, 219, 95, 0.8)', 
+                        'rgba(163, 230, 53, 0.8)', 
+                        'rgba(249, 115, 22, 0.8)'
+                    ],
+                    borderRadius: 8,
+                    hoverBackgroundColor: '#FADB5F',
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: { padding: { top: 30, bottom: 15, left: 10, right: 10 } }, /* More space */
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(255, 255, 255, 0.03)', drawBorder: false },
+                        ticks: { color: '#94a3b8', font: { size: 11 } } /* Larger font */
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#cbd5e1', font: { size: 12, weight: 'bold' } } /* Larger font */
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                        titleColor: '#FADB5F',
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyColor: '#fff',
+                        bodyFont: { size: 11 },
+                        padding: 12,
+                        cornerRadius: 6,
+                        displayColors: false
+                    }
+                }
+            }
+        });
+
+        // Force a resize check just in case
+        this.charts.satisfaction.resize();
+        this.charts.visits.resize();
+    }
+
+    // --- VISIT TRACKING LOGIC ---
+    initializeVisitData() {
+        // If first time, initialize with some base data so chart isn't empty
+        if (Object.keys(this.visitCounts).length === 0) {
+            locations.forEach(loc => {
+                this.visitCounts[loc.id] = Math.floor(Math.random() * 50) + 20;
+            });
+            this.saveVisitData();
+        }
+    }
+
+    recordVisit(locationId) {
+        this.visitCounts[locationId] = (this.visitCounts[locationId] || 0) + 1;
+        this.saveVisitData();
+    }
+
+    saveVisitData() {
+        localStorage.setItem('vn_heritage_visits', JSON.stringify(this.visitCounts));
+    }
+
+    getMostVisitedLocation() {
+        let max = -1;
+        let popularName = "N/A";
+        locations.forEach(l => {
+            const count = this.visitCounts[l.id] || 0;
+            if (count > max) {
+                max = count;
+                popularName = l.name;
+            }
+        });
+        return popularName;
+    }
+
     openVR() {
         this.mode = 'vr';
         if (!this.currentLocation) return;
@@ -376,6 +592,55 @@ class VRTravelApp {
         
         // Set iframe source ONLY NOW (Optimized loading)
         this.vrIframe.src = this.currentLocation.vrLink;
+    }
+
+    // --- RATING & REAL-TIME LOGIC ---
+    handleRating(score) {
+        if (this.userHasRated) return;
+
+        // 1. Update Data
+        this.ratingData[score - 1]++;
+        this.userHasRated = true;
+
+        // 2. Persist
+        localStorage.setItem('vn_heritage_rated_v6', 'true');
+        localStorage.setItem('vn_heritage_ratings_v6', JSON.stringify(this.ratingData));
+
+        // 3. Transition UI
+        this.ratingContainer.classList.add('fade-out');
+        
+        setTimeout(() => {
+            this.ratingContainer.style.display = 'none';
+            this.chartResultContainer.style.display = 'block';
+            
+            // Trigger Fade-in
+            setTimeout(() => {
+                this.chartResultContainer.classList.add('fade-in');
+                this.updateSatisfactionChart();
+                this.updateDashboardData();
+            }, 50);
+        }, 500);
+    }
+
+    calculateWeightedAverage() {
+        let totalScore = 0;
+        let totalVotes = 0;
+
+        this.ratingData.forEach((count, index) => {
+            const score = index + 1;
+            totalScore += score * count;
+            totalVotes += count;
+        });
+
+        if (totalVotes === 0) return "0.0";
+        return (totalScore / totalVotes).toFixed(1);
+    }
+
+    updateSatisfactionChart() {
+        if (this.charts.satisfaction) {
+            this.charts.satisfaction.data.datasets[0].data = [...this.ratingData];
+            this.charts.satisfaction.update('active');
+        }
     }
 }
 

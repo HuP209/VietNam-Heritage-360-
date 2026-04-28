@@ -6,6 +6,7 @@ const locations = [
     lng: 107.1839,
     image: 'https://images.unsplash.com/photo-1528127269322-539801943592?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
     vrLink: 'https://www.halomedia.vn/360tours/ha-long-bay',
+    region: 'Miền Bắc',
     hook: 'Bạn đã bao giờ đứng giữa biển trời và thấy mình nhỏ bé?',
     description: 'Nơi hàng nghìn đảo đá vôi trôi nổi giữa làn nước xanh ngọc. Mỗi hòn đảo ở đây đều mang một câu chuyện cổ xưa…'
   },
@@ -16,6 +17,7 @@ const locations = [
     lng: 105.8542,
     image: 'https://images.unsplash.com/photo-1599708153386-62bf3f035c78?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
     vrLink: 'https://diachidohanoi.vr360.com.vn/',
+    region: 'Miền Bắc',
     hook: 'Thủ đô ngàn năm văn hiến với những góc phố thâm trầm...',
     description: 'Nơi thời gian như ngưng đọng bên Hồ Gươm, lẩn khuất trong từng con ngõ nhỏ của 36 phố phường.'
   },
@@ -56,6 +58,7 @@ const locations = [
     lng: 107.5909,
     image: 'assets/hue_bg.jpg',
     vrLink: 'https://vr360.com.vn/projects/hue-tourist/',
+    region: 'Miền Trung',
     hook: 'Lắng nghe nhịp thời gian trôi chậm lại bên bờ sông Hương...',
     description: 'Kinh thành xưa with vẻ đẹp trầm mặc, những lăng tẩm uy nghi in bóng xuống dòng nước lững lờ.'
   },
@@ -77,6 +80,7 @@ const locations = [
     lng: 108.3331,
     image: 'assets/hoi_an_bg.jpg',
     vrLink: 'https://vr360.com.vn/projects/hoian-metaverse/',
+    region: 'Miền Trung',
     hook: 'Phố cổ rêu phong và những đêm lồng đèn lung linh...',
     description: 'Dạo bước trên những con phố nhỏ, bạn sẽ như lạc vào một dòng chảy xuyên thời gian từ hàng trăm năm trước.'
   },
@@ -97,6 +101,7 @@ const locations = [
     lng: 106.6953,
     image: 'assets/dinh_doc_lap_bg.jpg',
     vrLink: 'https://vr360.com.vn/projects/dinhdoclap/',
+    region: 'Miền Nam',
     hook: 'Khoảnh khắc lịch sử hội tụ tại trung tâm Sài Gòn...',
     description: 'Biểu tượng của sự hòa bình và thống nhất, nơi đánh dấu cột mốc vàng son của dân tộc.'
   },
