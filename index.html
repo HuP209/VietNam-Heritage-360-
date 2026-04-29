@@ -195,5 +195,44 @@
     
     <script src="./src/data.js"></script>
     <script src="./src/app.js"></script>
+    <script src="./src/chatWidget.js"></script>
+
+    <!-- AI Chat Widget -->
+    <div id="ai-chat-widget">
+        <!-- Floating Button -->
+        <button id="chat-toggle-btn" class="chat-toggle-btn" title="Hỏi hướng dẫn viên AI">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="chat-window" class="chat-window hidden">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=Guide&backgroundColor=transparent" alt="AI Agent" class="chat-avatar">
+                    <div>
+                        <h3 class="chat-title">Heritage AI Guide</h3>
+                        <span class="chat-status">Online</span>
+                    </div>
+                </div>
+                <button id="chat-close-btn" class="chat-close-btn">&times;</button>
+            </div>
+            
+            <div id="chat-messages" class="chat-messages">
+                <!-- Messages will be rendered here -->
+            </div>
+            
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Hỏi về địa danh, lịch sử..." autocomplete="off">
+                <button id="chat-send-btn" class="chat-send-btn" title="Gửi">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

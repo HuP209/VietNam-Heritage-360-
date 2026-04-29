@@ -57,8 +57,18 @@ class VRTravelApp {
         this.initializeVisitData();
 
         // Rating Feature State
-        this.userHasRated = localStorage.getItem('vn_heritage_rated_v6') === 'true';
-        this.ratingData = JSON.parse(localStorage.getItem('vn_heritage_ratings_v6')) || [0, 0, 0, 0, 0]; 
+        // Cho phép người dùng đánh giá tiếp ở các lượt truy cập sau (reload) thay vì khóa vĩnh viễn
+        this.userHasRated = false;
+        
+        let savedRatings = localStorage.getItem('vn_heritage_ratings_v6');
+        if (!savedRatings) {
+            // Khởi tạo dữ liệu cơ bản để mô phỏng một hệ thống đã có người đánh giá
+            this.ratingData = [5, 15, 60, 240, 480]; 
+            localStorage.setItem('vn_heritage_ratings_v6', JSON.stringify(this.ratingData));
+        } else {
+            this.ratingData = JSON.parse(savedRatings);
+        }
+
         this.realTimeInterval = null;
         
         // Rating Elements
@@ -337,11 +347,15 @@ class VRTravelApp {
             this.storyView.classList.remove('active');
             this.vrView.classList.remove('active');
             
-            // Header visibility logic
+            // Header and Chat visibility logic
             if (targetView === this.heroView) {
                 this.appHeader.classList.remove('visible');
+                const widget = document.getElementById('ai-chat-widget');
+                if (widget) widget.style.display = 'none';
             } else {
                 this.appHeader.classList.add('visible');
+                const widget = document.getElementById('ai-chat-widget');
+                if (widget) widget.style.display = 'flex';
             }
             
             // Execute callback (e.g. data setting)
@@ -603,7 +617,6 @@ class VRTravelApp {
         this.userHasRated = true;
 
         // 2. Persist
-        localStorage.setItem('vn_heritage_rated_v6', 'true');
         localStorage.setItem('vn_heritage_ratings_v6', JSON.stringify(this.ratingData));
 
         // 3. Transition UI
