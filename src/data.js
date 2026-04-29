@@ -207,5 +207,17 @@ const locations = [
     vrLink: 'https://store360.vingg.vn/ha-noi/hoan-kiem/nhatuhoalo/',
     hook: 'Nơi ý chí thép nở hoa giữa ngục tù tăm tối...',
     description: 'Di tích lịch sử minh chứng cho tinh thần quật cường của các chiến sĩ cách mạng, được mệnh danh là "Địa ngục trần gian" giữa lòng Hà Nội.'
+  },
+  {
+    id: 'coto',
+    name: 'Đảo Cô Tô',
+    lat: 20.9850,
+    lng: 107.7600,
+    isIsland: true,
+    image: 'assets/coto_bg.jpg',
+    vrLink: 'https://vr360vietnam.vn/coto/360.html',
+    region: 'Miền Bắc',
+    hook: 'Hòn ngọc xanh giữa vùng biển Đông Bắc Tổ quốc...',
+    description: 'Quần đảo Cô Tô với những bãi biển hoang sơ, làn nước trong xanh và vẻ đẹp bình yên đầy mê hoặc.'
   }
 ];

@@ -20,9 +20,6 @@ class AIChatWidget {
         
         this.bindEvents();
 
-        // Ẩn mặc định khi ở màn hình Hero ban đầu
-        document.getElementById('ai-chat-widget').style.display = 'none';
-
         // Initial Greeting if empty
         if (this.messages.length === 0) {
             this.addMessage("AI", "Chào bạn! Tôi là Hướng dẫn viên AI của Vietnam Heritage 360°. Bạn muốn tìm hiểu về địa danh nào trên bản đồ hôm nay? 🇻🇳");
@@ -78,9 +75,20 @@ PERSONALITY:
         this.closeBtn.addEventListener('click', () => this.toggleChat(false));
         
         this.sendBtn.addEventListener('click', () => this.handleSend());
-        this.inputField.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.handleSend();
+        this.inputField.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.handleSend();
+            }
         });
+        // Auto-resize textarea as user types
+        this.inputField.addEventListener('input', () => this.autoResize());
+    }
+
+    autoResize() {
+        const el = this.inputField;
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
     }
 
     toggleChat(forceState = null) {
@@ -151,61 +159,111 @@ PERSONALITY:
         // User message
         this.addMessage('User', text);
         this.inputField.value = '';
+        this.inputField.style.height = 'auto';
 
         // Trigger AI
         this.generateAIResponse(text);
     }
 
     /**
-     * Tích hợp API thật của Gemini
+     * Smart Offline AI - Trả lời từ dữ liệu địa danh thực
      */
     async generateAIResponse(userText) {
         this.showTyping();
-        
-        // Sử dụng API Key người dùng cung cấp
-        const apiKey = 'AIzaSyCjOGTCVpRcxldbPdxC3wYXPh5c0_-H3FE';
 
-        // Lấy dữ liệu dạng chuỗi của tất cả địa danh đưa vào Prompt
-        const locationsContext = typeof locations !== 'undefined' ? JSON.stringify(locations) : 'Không có dữ liệu';
-        const contextAndQuestion = `Lưu ý ngữ cảnh JSON các địa điểm của ứng dụng (để đối chiếu thông tin và hướng dẫn):\n${locationsContext}\n\nCâu hỏi của người dùng:\n${userText}`;
-
-        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        // Try Gemini API first, fall back to smart local AI
+        const apiKey = 'AIzaSyCCrp1yIHYo1MG5vU0Opf9Coazr27mSI94';
+        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+        const locationsContext = typeof locations !== 'undefined' 
+            ? JSON.stringify(locations.map(l => ({ id: l.id, name: l.name, region: l.region, hook: l.hook, description: l.description }))) 
+            : '[]';
+        const contextAndQuestion = `Ngữ cảnh địa điểm:\n${locationsContext}\n\nCâu hỏi: ${userText}`;
 
         try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
             const response = await fetch(apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                signal: controller.signal,
                 body: JSON.stringify({
-                    systemInstruction: {
-                        parts: [{ text: this.systemPrompt }]
-                    },
-                    contents: [{ role: "user", parts: [{ text: contextAndQuestion }] }],
-                    generationConfig: {
-                        temperature: 0.7,
-                        maxOutputTokens: 800,
-                    }
+                    contents: [{ parts: [{ text: this.systemPrompt + '\n\n' + contextAndQuestion }] }],
+                    generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
                 })
             });
+            clearTimeout(timeout);
 
-            if (!response.ok) {
-                throw new Error("Lỗi API hoặc Key không hợp lệ");
-            }
-            
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
             const data = await response.json();
-            const aiReply = data.candidates[0].content.parts[0].text;
-            
-            // Format markdown (bold, lists) and line breaks to semantic html
-            let formattedReply = aiReply.replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
-            formattedReply = formattedReply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+            const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!aiReply) throw new Error('Empty response');
+
+            let formattedReply = aiReply
+                .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
 
             this.hideTyping();
             this.addMessage('AI', formattedReply);
 
         } catch (err) {
-            console.error(err);
+            // Smart Offline AI fallback
             this.hideTyping();
-            this.addMessage('AI', "😢 Xin lỗi, đã có lỗi kết nối với máy chủ AI. Vui lòng kiểm tra lại kết nối mạng hoặc thử lại sau!");
+            this.addMessage('AI', this.getSmartResponse(userText));
         }
+    }
+
+    getSmartResponse(userText) {
+        const lower = userText.toLowerCase();
+        const locs = typeof locations !== 'undefined' ? locations : [];
+
+        // Find matching location by name
+        const matched = locs.find(l => lower.includes(l.name.toLowerCase().split(' ').pop()) 
+            || lower.includes(l.name.toLowerCase()));
+
+        // Greeting
+        if (/^(xin chào|chào|hello|hi|hey|alo)/.test(lower)) {
+            return `🌿 Chào bạn! Tôi là Hướng dẫn viên AI của <b>Vietnam Heritage 360°</b>.<br><br>Tôi có thể giúp bạn tìm hiểu về <b>${locs.length} địa danh</b> nổi bật trên bản đồ di sản:<br><br>${locs.slice(0,5).map(l => `• ${l.name}`).join('<br>')}<br>...và nhiều địa danh khác!<br><br>Bạn muốn khám phá địa danh nào? 🗺️`;
+        }
+
+        // List all locations
+        if (/danh sách|tất cả|có những|địa điểm nào|bao nhiêu/.test(lower)) {
+            const byRegion = { 'Miền Bắc': [], 'Miền Trung': [], 'Miền Nam': [] };
+            locs.forEach(l => { if (l.region && byRegion[l.region]) byRegion[l.region].push(l.name); });
+            return `🗺️ <b>Danh sách ${locs.length} địa danh trên bản đồ:</b><br><br>
+                🔵 <b>Miền Bắc:</b> ${byRegion['Miền Bắc'].join(', ') || 'N/A'}<br><br>
+                🟡 <b>Miền Trung:</b> ${byRegion['Miền Trung'].join(', ') || 'N/A'}<br><br>
+                🟠 <b>Miền Nam:</b> ${byRegion['Miền Nam'].join(', ') || 'N/A'}<br><br>
+                Nhấp vào địa danh trên bản đồ hoặc hỏi tôi để biết thêm chi tiết! ✨`;
+        }
+
+        // Matched specific location
+        if (matched) {
+            return `🏛️ <b>${matched.name}</b><br><br>
+                💬 <i>"${matched.hook}"</i><br><br>
+                📖 ${matched.description}<br><br>
+                ${matched.region ? `📍 Khu vực: <b>${matched.region}</b>` : ''}<br><br>
+                👆 Nhấp vào điểm trên bản đồ để <b>bắt đầu hành trình VR 360°</b> ngay!`;
+        }
+
+        // Travel tips
+        if (/kinh nghiệm|tips|lưu ý|nên đi|thời điểm|mùa/.test(lower)) {
+            return `🌟 <b>Kinh nghiệm du lịch di sản Việt Nam:</b><br><br>
+                🗓️ <b>Thời điểm tốt nhất:</b> Tháng 10 – 4 (tránh mùa mưa miền Trung)<br>
+                🎒 <b>Gợi ý hành trình:</b> Hà Nội → Ninh Bình → Huế → Hội An → TP.HCM<br>
+                📸 <b>Mẹo:</b> Dùng tính năng VR 360° để "đến thăm" trước khi đặt vé!<br>
+                🏛️ <b>Di sản UNESCO:</b> Vịnh Hạ Long, Hội An, Mỹ Sơn, Huế đều có trong bản đồ<br><br>
+                Bạn muốn tìm hiểu địa danh nào cụ thể hơn? 🗺️`;
+        }
+
+        // Default response
+        const randomLocs = locs.sort(() => 0.5 - Math.random()).slice(0, 3);
+        return `🌿 Tôi chưa tìm thấy thông tin chính xác cho câu hỏi này.<br><br>
+            Bạn có thể hỏi về các địa danh như:<br>
+            ${randomLocs.map(l => `• <b>${l.name}</b> – ${l.hook}`).join('<br>')}<br><br>
+            Hoặc hỏi: "Danh sách tất cả địa điểm", "Kinh nghiệm du lịch"... 🗺️`;
     }
 }
 

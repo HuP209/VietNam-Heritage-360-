@@ -138,9 +138,13 @@ class VRTravelApp {
         locations.forEach(loc => {
             const isIsland = loc.isIsland;
             
+            const isSovereignty = loc.id === 'hoang_sa_island' || loc.id === 'truong_sa_island';
+            const isOtherIsland = loc.isIsland && !isSovereignty;
+
             const customIcon = L.divIcon({
-                className: isIsland ? 'custom-marker island-marker' : 'custom-marker',
-                html: isIsland ? `
+                className: isSovereignty ? 'custom-marker island-marker' : 
+                          (isOtherIsland ? 'custom-marker island-dot-marker' : 'custom-marker'),
+                html: isSovereignty ? `
                     <div class="flag-pole"></div>
                     <div class="island-flag"></div>
                     <div class="marker-core"></div>
@@ -149,13 +153,13 @@ class VRTravelApp {
                     <div class="marker-core"></div>
                     <div class="marker-pulse"></div>
                 `,
-                iconSize: isIsland ? [20, 20] : [40, 40],
-                iconAnchor: isIsland ? [10, 10] : [20, 20]
+                iconSize: isSovereignty ? [20, 20] : (isOtherIsland ? [15, 15] : [40, 40]),
+                iconAnchor: isSovereignty ? [10, 10] : (isOtherIsland ? [7, 7] : [20, 20])
             });
 
             const marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(this.map);
             
-            if (isIsland) {
+            if (isSovereignty) {
                 // Permanent label for Hoang Sa / Truong Sa
                 marker.bindTooltip(loc.name, {
                     permanent: true,
@@ -189,8 +193,8 @@ class VRTravelApp {
                 }, 1000);
             });
 
-            // Add decorative island cluster for archipelagos (outside click handler)
-            if (loc.isIsland) {
+            // Add decorative island cluster ONLY for Hoang Sa / Truong Sa
+            if (isSovereignty) {
                 this.addDecorativeIslands(loc.lat, loc.lng, loc.id === 'hoang_sa_island' ? 15 : 30);
             }
         });
@@ -241,8 +245,12 @@ class VRTravelApp {
         
         // Story to VR or Memorial
         this.btnStartVr.addEventListener('click', () => {
-            if (this.currentLocation && this.currentLocation.isIsland) {
-                // Island memorial interaction
+            const isSovereignty = this.currentLocation && 
+                                (this.currentLocation.id === 'hoang_sa_island' || 
+                                 this.currentLocation.id === 'truong_sa_island');
+
+            if (isSovereignty) {
+                // Island memorial interaction (Only for HS/TS)
                 this.btnStartVr.style.opacity = '0';
                 setTimeout(() => {
                     this.btnStartVr.style.display = 'none';
@@ -393,7 +401,8 @@ class VRTravelApp {
         this.btnStartVr.style.display = 'inline-block';
         this.btnStartVr.style.opacity = '1';
         
-        if (location.isIsland) {
+        const isSovereignty = location.id === 'hoang_sa_island' || location.id === 'truong_sa_island';
+        if (isSovereignty) {
             this.btnStartVr.textContent = '✦ Tưởng Niệm Các Anh Hùng ✦';
         } else {
             this.btnStartVr.textContent = '✦ Bắt Đầu Hành Trình ✦';
@@ -559,13 +568,16 @@ class VRTravelApp {
 
     // --- VISIT TRACKING LOGIC ---
     initializeVisitData() {
-        // If first time, initialize with some base data so chart isn't empty
-        if (Object.keys(this.visitCounts).length === 0) {
-            locations.forEach(loc => {
+        // Ensure all locations have at least some starting data
+        let updated = false;
+        locations.forEach(loc => {
+            if (!(loc.id in this.visitCounts)) {
                 this.visitCounts[loc.id] = Math.floor(Math.random() * 50) + 20;
-            });
-            this.saveVisitData();
-        }
+                updated = true;
+            }
+        });
+        
+        if (updated) this.saveVisitData();
     }
 
     recordVisit(locationId) {
