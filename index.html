@@ -30,12 +30,34 @@
                 </div>
             </div>
             <div class="header-right">
+                <button class="header-btn" id="btn-search-toggle" title="Tìm kiếm địa danh">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </button>
                 <button class="header-btn" id="btn-show-dashboard" title="Phân tích hệ sinh thái">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
                 </button>
             </div>
         </div>
     </header>
+
+    <!-- Search Panel -->
+    <div id="search-panel" class="search-panel" aria-hidden="true">
+        <div class="search-panel-inner">
+            <div class="search-input-wrapper">
+                <svg class="search-input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" class="search-input" placeholder="Tìm kiếm địa danh..." autocomplete="off">
+                <button id="search-clear-btn" class="search-clear-btn" title="Xóa" aria-label="Xóa tìm kiếm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+            <div class="search-list-header">
+                <span id="search-count">Tất cả địa danh</span>
+            </div>
+            <ul id="search-results-list" class="search-results-list" role="listbox"></ul>
+        </div>
+    </div>
+    <!-- Search Backdrop -->
+    <div id="search-backdrop" class="search-backdrop"></div>
 
     <!-- Global VR Back Button -->
     <button class="btn-back-vr" id="btn-back-vr" onclick="if(window.handleVrBack) window.handleVrBack()">← Quay lại Bản đồ</button>
@@ -193,9 +215,47 @@
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     
+    <script src="assets/vietnam_highres.js"></script>
+    <script src="./src/videos.js"></script>
     <script src="./src/data.js"></script>
     <script src="./src/app.js"></script>
     <script src="./src/chatWidget.js"></script>
+
+    <!-- Video Toggle Button -->
+    <button id="video-toggle-btn" class="video-toggle-btn" title="Video lịch sử Việt Nam" aria-label="Mở video lịch sử">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5,3 19,12 5,21"/></svg>
+    </button>
+
+    <!-- Video Carousel Panel -->
+    <div id="video-panel" class="video-panel" aria-hidden="true">
+        <div class="video-panel-header">
+            <div class="video-panel-title">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16"><polygon points="5,3 19,12 5,21"/></svg>
+                <span>Video Lịch Sử Việt Nam</span>
+            </div>
+            <button id="video-panel-close" class="video-panel-close" title="Đóng">&times;</button>
+        </div>
+        <div class="video-carousel" id="video-carousel"></div>
+    </div>
+
+    <!-- Video Player Overlay -->
+    <div id="video-overlay" class="video-overlay" aria-hidden="true">
+        <div class="video-overlay-backdrop" id="video-overlay-backdrop"></div>
+        <div class="video-modal">
+            <button id="video-close-btn" class="video-close-btn" title="Đóng">&times;</button>
+            <div class="video-iframe-wrapper">
+                <iframe id="video-iframe"
+                    allow="autoplay; encrypted-media; fullscreen"
+                    allowfullscreen
+                    frameborder="0"
+                    src=""></iframe>
+            </div>
+            <div class="video-modal-info">
+                <h3 id="video-modal-title"></h3>
+                <p id="video-modal-desc"></p>
+            </div>
+        </div>
+    </div>
 
     <!-- AI Chat Widget -->
     <div id="ai-chat-widget">
