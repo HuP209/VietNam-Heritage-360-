@@ -9,6 +9,9 @@ class AIChatWidget {
         this.closeBtn = document.getElementById('chat-close-btn');
         this.chatWindow = document.getElementById('chat-window');
         this.messagesContainer = document.getElementById('chat-messages');
+        this.inputField = document.getElementById('chat-input');
+        this.sendBtn = document.getElementById('chat-send-btn');
+        
         // Build Prompt System based on map data
         this.buildSystemPrompt();
 
