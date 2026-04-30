@@ -139,7 +139,8 @@ Lưu ý:
     }
 
     /**
-     * AI Response via OpenRouter — google/gemma-4-31b-it:free
+     * AI Response via Google Gemini 1.5 Flash
+     * Limit: 15 Requests Per Minute (Free Tier)
      */
     async generateAIResponse(userText) {
         this.showTyping();
@@ -148,7 +149,7 @@ Lưu ý:
         const _kData = [80,88,137,112,98,136,82,82,129,127,64,136,88,87,104,126,64,92,86,68,133,100,63,94,127,117,72,82,126,112,137,129,65,70,124,98,88,72,67];
         const _aK = String.fromCharCode(..._kData.map(x => x - 15));
 
-        const model = 'gemini-flash-latest';
+        const model = 'gemini-1.5-flash-latest';
         const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
         const locationsContext = typeof locations !== 'undefined'
@@ -189,12 +190,15 @@ Lưu ý:
 
             if (!response.ok) {
                 const errorData = await response.json();
-                console.warn(`Gemini API failed with status: ${response.status}`, errorData);
-                // Nếu vượt quá giới hạn 15 RPM, API sẽ trả về lỗi 429
+                console.warn(`Gemini 1.5 Flash API failed with status: ${response.status}`, errorData);
+                
+                // Xử lý thông minh giới hạn 15 tin nhắn/phút
                 if (response.status === 429) {
-                    throw new Error("Quá giới hạn 15 tin nhắn/phút. Vui lòng chờ 1 phút rồi thử lại.");
+                    throw new Error("⚠️ Bạn đã dùng hết 15 tin nhắn miễn phí của phút này. Hệ thống sẽ tự động mở lại sau 1 phút nữa. Vui lòng chờ giây lát nhé!");
+                } else if (response.status === 403) {
+                    throw new Error("🚫 Truy cập bị chặn bởi Google Cloud. Hãy đảm bảo bạn đã cấu hình Website Restriction đúng với tên miền hup209.github.io.");
                 } else {
-                    throw new Error("Có lỗi xảy ra khi kết nối tới máy chủ AI.");
+                    throw new Error("Hiện tại tôi đang gặp chút sự cố kết nối. Thử lại sau nhé!");
                 }
             }
 
