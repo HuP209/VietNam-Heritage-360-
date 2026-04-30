@@ -39,6 +39,7 @@ class VRTravelApp {
         
         // Header
         this.appHeader = document.querySelector('.app-header');
+        this.videoToggleBtn = document.getElementById('video-toggle-btn');
         
         // Dashboard
         this.dashboardOverlay = document.getElementById('dashboard-overlay');
@@ -811,6 +812,15 @@ class VRTravelApp {
                 }
                 const widget = document.getElementById('ai-chat-widget');
                 if (widget) widget.style.display = 'flex';
+            }
+            
+            // Ẩn/Hiện nút Video tùy theo View
+            if (this.videoToggleBtn) {
+                if (targetView === this.storyView || targetView === this.vrView || targetView === this.heroView) {
+                    this.videoToggleBtn.style.display = 'none';
+                } else {
+                    this.videoToggleBtn.style.display = 'flex';
+                }
             }
             
             // Execute callback (e.g. data setting)
