@@ -68,6 +68,27 @@ h1, h2, h3 {
   transform: translateY(0);
 }
 
+/* Header thu gọn khi vào Story View — chỉ hiện logo */
+.app-header.compact .header-text,
+.app-header.compact .header-right {
+  opacity: 0;
+  width: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, width 0.3s ease, margin 0.3s ease;
+}
+.app-header.compact .header-container {
+  min-width: unset;
+  width: auto;
+  padding: 6px 10px;
+  transition: all 0.35s ease;
+}
+.app-header.compact .header-left {
+  gap: 0;
+}
+
 .header-container {
   display: flex;
   align-items: center;
@@ -580,21 +601,22 @@ h1, h2, h3 {
 }
 
 .btn-back {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
   color: white;
   padding: 10px 25px;
   border-radius: 25px;
   cursor: pointer;
-  position: fixed; /* Changed to fixed to stay in corner */
+  position: fixed;
   top: 25px;
   right: 25px;
   backdrop-filter: blur(15px);
   transition: all 0.3s ease;
   font-family: var(--font-premium);
   letter-spacing: 1px;
-  z-index: 1000;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  z-index: 1100; /* Above header (1000) so it's always visible */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  font-size: 0.9rem;
 }
 
 .btn-back:hover {
@@ -1502,4 +1524,1028 @@ body.dashboard-active #map-view {
     height: 70vh;
     border-radius: 20px 20px 0 0;
   }
+}
+
+/* =============================================
+   SEARCH PANEL
+   ============================================= */
+
+/* Backdrop blur overlay — phủ toàn màn hình, header vẫn nổi trên nhờ z-index: 1000 */
+.search-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 899; /* thấp hơn header (1000) nên header vẫn hiện rõ */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.search-backdrop.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* Panel container — căn thẳng hàng với viền trái header */
+.search-panel {
+  position: fixed;
+  top: 70px; /* ngay bên dưới header */
+  left: 25px; /* bằng padding-left của .app-header để thẳng hàng */
+  z-index: 900;
+  width: 350px; /* = min-width của header-container để khớp bề ngang */
+  transform: translateY(-10px) scaleY(0.95);
+  transform-origin: top left;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.search-panel.open {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+  pointer-events: all;
+}
+@media (max-width: 600px) {
+  .search-panel {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    top: 70px;
+  }
+}
+
+/* Glass inner card */
+.search-panel-inner {
+  background: rgba(15, 15, 25, 0.88);
+  border: 1px solid rgba(250, 219, 95, 0.18);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(255,255,255,0.04) inset;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Input row */
+.search-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.search-input-icon {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  color: #FADB5F;
+  opacity: 0.8;
+}
+.search-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f0ece0;
+  font-size: 14px;
+  font-family: inherit;
+  caret-color: #FADB5F;
+}
+.search-input::placeholder {
+  color: rgba(240, 236, 224, 0.35);
+}
+.search-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(240, 236, 224, 0.6);
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s;
+}
+.search-clear-btn svg {
+  width: 11px;
+  height: 11px;
+}
+.search-clear-btn.visible {
+  opacity: 1;
+}
+.search-clear-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* List header */
+.search-list-header {
+  padding: 8px 14px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(250, 219, 95, 0.6);
+}
+
+/* Results list */
+.search-results-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0 8px;
+  max-height: 360px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(250,219,95,0.25) transparent;
+}
+.search-results-list::-webkit-scrollbar {
+  width: 4px;
+}
+.search-results-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.search-results-list::-webkit-scrollbar-thumb {
+  background: rgba(250,219,95,0.25);
+  border-radius: 99px;
+}
+
+/* Each result item */
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: background 0.18s;
+  border-radius: 0;
+  position: relative;
+}
+.search-result-item:hover,
+.search-result-item.focused {
+  background: rgba(250, 219, 95, 0.08);
+}
+.search-result-item:hover .search-item-name {
+  color: #FADB5F;
+}
+
+/* Gold dot icon */
+.search-item-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe87a, #FADB5F 60%, #c9980a);
+  box-shadow: 0 0 6px rgba(250, 219, 95, 0.55);
+  flex-shrink: 0;
+  animation: searchDotPulse 2.4s ease-in-out infinite;
+}
+@keyframes searchDotPulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(250, 219, 95, 0.55); }
+  50%       { box-shadow: 0 0 12px rgba(250, 219, 95, 0.9); }
+}
+
+/* Special dot for sovereignty islands */
+.search-item-dot.sovereignty {
+  background: radial-gradient(circle at 35% 35%, #ff8a8a, #e53e3e 60%, #9b1c1c);
+  box-shadow: 0 0 6px rgba(229, 62, 62, 0.6);
+}
+
+.search-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.search-item-name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #f0ece0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.18s;
+}
+.search-item-region {
+  font-size: 11px;
+  color: rgba(240, 236, 224, 0.4);
+}
+
+/* Arrow chevron on hover */
+.search-result-item::after {
+  content: '›';
+  position: absolute;
+  right: 14px;
+  color: rgba(250, 219, 95, 0.4);
+  font-size: 18px;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.18s, transform 0.18s;
+}
+.search-result-item:hover::after,
+.search-result-item.focused::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* No results state */
+.search-no-results {
+  padding: 24px 14px;
+  text-align: center;
+  color: rgba(240, 236, 224, 0.35);
+  font-size: 13px;
+}
+
+/* Highlight matched text */
+.search-highlight {
+  color: #FADB5F;
+  font-weight: 600;
+}
+
+/* =============================================
+   VIDEO SYSTEM
+   ============================================= */
+
+/* --- Video Toggle Button (FAB) --- */
+.video-toggle-btn {
+  position: fixed;
+  bottom: 80px;
+  left: 20px;
+  z-index: 1100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid #FADB5F; /* Stronger border */
+  background: #0a192f; /* Solid background for prominence */
+  color: #FADB5F;
+  cursor: pointer;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(0,0,0,0.6), 0 0 10px rgba(250, 219, 95, 0.3); /* Added glow */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body.map-active .video-toggle-btn {
+  display: flex;
+}
+.video-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  margin-left: 3px;
+}
+.video-toggle-btn:hover {
+  background: #FADB5F;
+  color: #000;
+  box-shadow: 0 0 30px rgba(250, 219, 95, 0.5);
+  transform: scale(1.12);
+}
+.video-toggle-btn.active {
+  background: #FADB5F;
+  color: #000;
+  box-shadow: 0 0 25px rgba(250, 219, 95, 0.6);
+}
+
+/* --- Video Carousel Panel --- */
+.video-panel {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  z-index: 1050;
+  transform: translateY(100%);
+  transition: transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.video-panel.open {
+  transform: translateY(0);
+}
+
+.video-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 20px; /* Reduced padding to lower the panel */
+  background: rgba(8, 16, 32, 0.98);
+  border-top: 1px solid rgba(250, 219, 95, 0.4);
+  backdrop-filter: blur(20px);
+}
+.video-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px; /* Larger font size as requested */
+  font-weight: 700;
+  color: #FADB5F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.video-panel-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 22px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+.video-panel-close:hover {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+}
+
+/* Horizontal scroll carousel */
+.video-carousel {
+  display: flex;
+  gap: 14px;
+  padding: 10px 20px 12px;
+  overflow-x: auto; /* Thêm lại thuộc tính cuộn ngang */
+  background: rgba(8, 16, 32, 0.95);
+  backdrop-filter: blur(20px);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(250,219,95,0.3) transparent;
+  cursor: grab;
+  user-select: none;
+}
+.video-carousel:active { cursor: grabbing; }
+.video-carousel::-webkit-scrollbar { height: 4px; }
+.video-carousel::-webkit-scrollbar-thumb {
+  background: rgba(250,219,95,0.3);
+  border-radius: 99px;
+}
+.video-carousel::-webkit-scrollbar-track { background: transparent; }
+
+/* Video Card */
+.video-card {
+  flex-shrink: 0;
+  width: 200px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+  position: relative;
+}
+.video-card:hover {
+  transform: scale(1.05) translateY(-3px);
+  border-color: rgba(250,219,95,0.4);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(250,219,95,0.15);
+}
+
+.video-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: #111;
+}
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+.video-card:hover .video-thumb img { transform: scale(1.08); }
+
+/* Play overlay icon */
+.video-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.3);
+  transition: background 0.2s;
+}
+.video-card:hover .video-play-overlay { background: rgba(0,0,0,0.15); }
+.video-play-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(250,219,95,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s, background 0.2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.video-card:hover .video-play-btn {
+  transform: scale(1.12);
+  background: #FADB5F;
+}
+.video-play-btn svg {
+  width: 14px; height: 14px;
+  fill: #000;
+  margin-left: 2px;
+}
+
+.video-card-body {
+  padding: 8px 10px 10px;
+}
+.video-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #f0ece0;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.video-card-loc {
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: rgba(250,219,95,0.65);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* --- Video Player Overlay --- */
+.video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.video-overlay.active {
+  opacity: 1;
+  pointer-events: all;
+}
+.video-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.video-modal {
+  position: relative;
+  z-index: 1;
+  width: min(900px, 92vw);
+  transform: scale(0.92);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.video-overlay.active .video-modal { transform: scale(1); }
+
+.video-close-btn {
+  position: absolute;
+  top: -15px;
+  right: -15px;
+  background: rgba(10, 25, 47, 0.9);
+  border: 2px solid #FADB5F;
+  color: #fff;
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, transform 0.2s;
+  line-height: 1;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+.video-close-btn:hover {
+  background: #FADB5F;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.video-iframe-wrapper {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.7);
+}
+.video-iframe-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.video-modal-info {
+  margin-top: 14px;
+  padding: 0 4px;
+}
+.video-modal-info h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  color: #FADB5F;
+  margin-bottom: 4px;
+}
+.video-modal-info p {
+  font-size: 13px;
+  color: rgba(240,236,224,0.65);
+  line-height: 1.5;
+}
+
+/* --- Search: Video section --- */
+.search-section-label {
+  padding: 8px 14px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(250, 219, 95, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.search-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+}
+.search-result-item.video-item .search-item-dot {
+  background: none;
+  box-shadow: none;
+  animation: none;
+  width: 22px; height: 16px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+  position: relative;
+}
+.search-result-item.video-item .search-item-dot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.search-result-item.video-item .search-item-dot::after {
+  content: '▶';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  color: #FADB5F;
+  background: rgba(0,0,0,0.35);
+}
+
+/* =============================================
+   RESPONSIVE — TABLET (max-width: 768px)
+   ============================================= */
+@media (max-width: 768px) {
+
+  /* --- Chống tràn toàn cục --- */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* --- Header --- */
+  .app-header {
+    padding: 8px 10px;
+  }
+  .header-container {
+    min-width: unset;
+    width: 100%;
+    max-width: 100%;
+    padding: 6px 10px;
+    border-radius: 10px;
+  }
+  .header-title { font-size: 0.9rem; }
+  .header-icon { width: 28px; height: 28px; }
+  .header-logo-img { width: 20px; height: 20px; }
+  .header-btn { width: 28px; height: 28px; }
+  .header-btn svg { width: 14px; height: 14px; }
+  .header-right { margin-left: 8px; gap: 5px; }
+
+  /* --- Hero --- */
+  .hero-content {
+    max-width: 100%;
+    padding: 16px;
+    padding-bottom: 50px;
+  }
+  .hero-text { font-size: 1rem; line-height: 1.5; }
+  .hero-signature { font-size: 1.3rem; margin-top: 18px; margin-bottom: 22px; }
+  .btn-explore { padding: 12px 32px; font-size: 1rem; }
+
+  /* --- Map Controls --- */
+  .custom-zoom-controls { bottom: 20px; right: 12px; gap: 8px; }
+  .zoom-btn { width: 36px; height: 36px; font-size: 1.2rem; }
+
+  /* --- Story View --- */
+  .story-content { width: 92%; max-width: 100%; padding: 0 10px; }
+  .story-title { font-size: 2.5rem; margin-bottom: 12px; }
+  .story-hook { font-size: 1.2rem; margin-bottom: 12px; }
+  .story-desc { font-size: 0.92rem; line-height: 1.6; }
+  .btn-primary { padding: 12px 28px; font-size: 1rem; margin-top: 20px; }
+  .btn-back { padding: 8px 16px; top: 12px; right: 12px; font-size: 0.85rem; }
+  .memorial-text { font-size: 1.2rem; margin-top: 20px; }
+
+  /* --- VR View --- */
+  .btn-back-vr { top: 12px; left: 10px; padding: 8px 16px; font-size: 0.85rem; }
+  .vr-ui-top { top: 55px; left: 10px; right: 10px; flex-direction: column; gap: 10px; }
+  .vr-location-name { order: -1; }
+
+  /* --- Video Panel --- */
+  .video-toggle-btn { bottom: 72px; left: 10px; width: 42px; height: 42px; }
+  .video-toggle-btn svg { width: 18px; height: 18px; }
+  .video-panel-header { padding: 5px 12px; }
+  .video-panel-title { font-size: 14px; }
+  .video-carousel { padding: 8px 12px 10px; gap: 10px; }
+  .video-card { min-width: 155px; max-width: 155px; }
+  .video-card-title { font-size: 0.72rem; }
+
+  /* --- Search Panel --- */
+  .search-panel { left: 10px; right: 10px; width: auto; top: 52px; }
+
+  /* --- Chat Widget --- */
+  #ai-chat-widget { bottom: 14px; left: 10px; }
+  .chat-toggle-btn { width: 40px; height: 40px; }
+  .chat-toggle-btn svg { width: 18px; height: 18px; }
+  .chat-window {
+    width: 300px;
+    height: 380px;
+  }
+
+  /* --- Dashboard --- */
+  .dashboard-container { width: 95%; max-height: 85vh; }
+  .dashboard-content { padding: 15px; }
+  .header-info h2 { font-size: 1.5rem; }
+
+  /* --- Map Tooltips --- */
+  .leaflet-tooltip.custom-tooltip { font-size: 0.9rem; padding: 4px 10px; }
+}
+
+/* =============================================
+   RESPONSIVE — ĐIỆN THOẠI (max-width: 480px)
+   ============================================= */
+@media (max-width: 480px) {
+
+  /* --- Chống tràn --- */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  .view-container {
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
+  }
+
+  /* --- Header siêu gọn --- */
+  .app-header { padding: 6px 6px; }
+  .header-container {
+    padding: 5px 8px;
+    border-radius: 8px;
+  }
+  .header-left { gap: 6px; }
+  .header-title { font-size: 0.75rem; letter-spacing: 0; }
+  .header-icon { width: 24px; height: 24px; border-radius: 6px; }
+  .header-logo-img { width: 16px; height: 16px; margin-right: 2px; }
+  .header-btn { width: 26px; height: 26px; border-radius: 5px; }
+  .header-btn svg { width: 12px; height: 12px; }
+  .header-right { margin-left: 4px; gap: 3px; }
+
+  /* --- Hero View --- */
+  .hero-bg { background-position: center center; }
+  .hero-content {
+    padding: 12px;
+    padding-bottom: 35px;
+  }
+  .hero-text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    margin-bottom: 10px;
+  }
+  .hero-signature {
+    font-size: 1.05rem;
+    margin-top: 14px;
+    margin-bottom: 18px;
+  }
+  .btn-explore {
+    padding: 10px 26px;
+    font-size: 0.88rem;
+    border-radius: 40px;
+  }
+
+  /* --- Map Controls --- */
+  .custom-zoom-controls { bottom: 14px; right: 8px; gap: 5px; }
+  .zoom-btn { width: 32px; height: 32px; font-size: 1rem; }
+
+  /* --- Story View --- */
+  #story-view {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .story-content {
+    width: 94%;
+    max-width: 100%;
+    padding: 0 8px;
+  }
+  .story-title { font-size: 1.6rem; margin-bottom: 8px; }
+  .story-hook { font-size: 0.92rem; margin-bottom: 8px; }
+  .story-desc { font-size: 0.82rem; line-height: 1.5; }
+  .btn-primary { padding: 10px 20px; font-size: 0.88rem; margin-top: 16px; }
+  .btn-back { padding: 6px 12px; top: 8px; right: 8px; font-size: 0.78rem; }
+  .memorial-text { font-size: 1rem; margin-top: 16px; }
+
+  /* --- VR View --- */
+  .btn-back-vr { top: 8px; left: 8px; padding: 6px 12px; font-size: 0.78rem; }
+  .vr-ui-top { top: 50px; left: 8px; right: 8px; }
+
+  /* --- Video Toggle Button --- */
+  .video-toggle-btn {
+    bottom: 58px;
+    left: 8px;
+    width: 38px;
+    height: 38px;
+    border-width: 1.5px;
+  }
+  .video-toggle-btn svg { width: 15px; height: 15px; margin-left: 2px; }
+
+  /* --- Video Panel --- */
+  .video-panel-header { padding: 4px 10px; }
+  .video-panel-title { font-size: 11px; letter-spacing: 0.2px; }
+  .video-panel-close { font-size: 18px; }
+  .video-carousel {
+    padding: 6px 8px 8px;
+    gap: 8px;
+  }
+  .video-card {
+    min-width: 130px;
+    max-width: 130px;
+    border-radius: 8px;
+  }
+  .video-thumb { height: 75px; }
+  .video-card-body { padding: 5px 7px 7px; }
+  .video-card-title { font-size: 0.62rem; -webkit-line-clamp: 1; }
+  .video-card-loc { font-size: 0.52rem; }
+  .video-play-btn { width: 28px; height: 28px; }
+  .video-play-btn svg { width: 12px; height: 12px; }
+
+  /* --- Search Panel --- */
+  .search-panel {
+    left: 6px;
+    right: 6px;
+    width: auto;
+    top: 46px;
+  }
+  .search-panel-inner { border-radius: 10px; }
+  .search-input-wrapper input {
+    font-size: 0.82rem !important;
+    padding: 7px 10px !important;
+  }
+  .search-results-list { max-height: 42vh; }
+  .search-result-item { padding: 8px 10px; font-size: 0.82rem; }
+
+  /* --- Chat Widget --- */
+  #ai-chat-widget { bottom: 10px; left: 8px; }
+  .chat-toggle-btn {
+    width: 36px;
+    height: 36px;
+  }
+  .chat-toggle-btn svg { width: 16px; height: 16px; }
+  .chat-window {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 60vh;
+    border-radius: 14px 14px 0 0;
+  }
+
+  /* --- Dashboard --- */
+  .dashboard-container {
+    width: 97%;
+    max-height: 88vh;
+    border-radius: 12px;
+  }
+  .dashboard-content { padding: 10px; }
+  .header-info h2 { font-size: 1.2rem; }
+  .kpi-grid { grid-template-columns: 1fr; gap: 8px; }
+  .stat-card { padding: 14px; }
+  .charts-grid { grid-template-columns: 1fr; }
+
+  /* --- Map Markers --- */
+  .marker-core { width: 10px; height: 10px; }
+  .marker-pulse { width: 22px; height: 22px; }
+  .leaflet-tooltip.custom-tooltip { font-size: 0.78rem; padding: 3px 7px; }
+  .island-flag { width: 16px; height: 11px; top: -16px; }
+  .island-flag::after { font-size: 9px; }
+}
+
+/* =============================================
+   RESPONSIVE — MÀN HÌNH RẤT NHỎ (max-width: 360px)
+   ============================================= */
+@media (max-width: 360px) {
+  .header-title { font-size: 0.68rem; }
+  .hero-text { font-size: 0.75rem; }
+  .hero-signature { font-size: 0.95rem; }
+  .btn-explore { padding: 8px 20px; font-size: 0.8rem; }
+  .story-title { font-size: 1.4rem; }
+  .story-hook { font-size: 0.85rem; }
+  .story-desc { font-size: 0.78rem; }
+  .video-card { min-width: 115px; max-width: 115px; }
+  .video-thumb { height: 65px; }
+  .video-toggle-btn { width: 34px; height: 34px; bottom: 52px; }
+  .video-toggle-btn svg { width: 13px; height: 13px; }
+  #ai-chat-widget { bottom: 8px; left: 6px; }
+  .chat-toggle-btn { width: 32px; height: 32px; }
+  .chat-toggle-btn svg { width: 14px; height: 14px; }
+}
+
+/* =============================================
+   RESPONSIVE — DASHBOARD MOBILE FIX
+   ============================================= */
+@media (max-width: 768px) {
+  .dashboard-panel {
+    width: 94vw;
+    height: 88vh;
+    padding: 16px 14px;
+    border-radius: 16px;
+    gap: 12px;
+  }
+  .dashboard-overlay.active .dashboard-panel {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .panel-header {
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+  .header-info h2 { font-size: 1.1rem; }
+  .last-updated { font-size: 11px; }
+  .btn-close-dashboard {
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+  .kpi-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-left: 0;
+  }
+  .stat-card {
+    min-width: unset;
+    flex: 1 1 calc(50% - 8px);
+    padding: 8px 10px;
+  }
+  .stat-label { font-size: 10px; margin-bottom: 2px; }
+  .stat-value { font-size: 16px; }
+  .panel-content {
+    gap: 10px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .charts-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .chart-box {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .chart-title { font-size: 13px; margin-bottom: 10px; }
+  .chart-canvas-wrapper { min-height: 180px; }
+  .emoji-icon { font-size: 2rem; }
+  .emoji-label { font-size: 0.65rem; }
+  .emoji-btn { padding: 6px; }
+}
+
+@media (max-width: 480px) {
+  .dashboard-panel {
+    width: 96vw;
+    height: 90vh;
+    padding: 12px 10px;
+    border-radius: 14px;
+    gap: 8px;
+  }
+  .panel-header { padding-bottom: 6px; }
+  .header-info h2 { font-size: 0.95rem; }
+  .last-updated { font-size: 10px; }
+  .btn-close-dashboard {
+    top: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    font-size: 0.9rem;
+  }
+  .stat-card {
+    flex: 1 1 calc(50% - 6px);
+    padding: 6px 8px;
+  }
+  .stat-label { font-size: 9px; }
+  .stat-value { font-size: 14px; }
+  .chart-box { padding: 10px; border-radius: 12px; }
+  .chart-title { font-size: 11px; margin-bottom: 8px; }
+  .chart-canvas-wrapper { min-height: 150px; }
+  .emoji-icon { font-size: 1.6rem; }
+  .emoji-btn { padding: 4px; gap: 4px; }
+
+  /* --- Back button on story view mobile --- */
+  .btn-back {
+    top: 10px;
+    right: 8px;
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    z-index: 1100;
+  }
+}
+
+/* =============================================
+   RESPONSIVE — LANDSCAPE (điện thoại nằm ngang)
+   ============================================= */
+@media (max-height: 500px) and (orientation: landscape) {
+
+  /* --- Header --- */
+  .app-header { padding: 4px 10px; }
+  .header-container { padding: 4px 8px; }
+  .header-icon { width: 22px; height: 22px; }
+  .header-logo-img { width: 16px; height: 16px; }
+  .header-title { font-size: 0.75rem; }
+  .header-btn { width: 24px; height: 24px; }
+
+  /* --- Hero --- */
+  .hero-content {
+    padding: 8px 20px 20px;
+    max-width: 90%;
+  }
+  .hero-text { font-size: 0.8rem; line-height: 1.35; margin-bottom: 6px; }
+  .hero-signature { font-size: 0.95rem; margin: 8px 0 12px; }
+  .btn-explore { padding: 8px 24px; font-size: 0.82rem; }
+
+  /* --- Map --- */
+  .custom-zoom-controls { bottom: 8px; right: 8px; gap: 4px; }
+  .zoom-btn { width: 30px; height: 30px; font-size: 0.9rem; }
+
+  /* --- Story View — cuộn dọc khi ngang --- */
+  #story-view {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .story-content { width: 80%; max-width: 600px; }
+  .story-title { font-size: 1.6rem; margin-bottom: 6px; }
+  .story-hook { font-size: 0.85rem; margin-bottom: 6px; }
+  .story-desc { font-size: 0.78rem; line-height: 1.4; }
+  .btn-primary { padding: 8px 18px; font-size: 0.82rem; margin-top: 10px; }
+  .btn-back { top: 6px; right: 8px; padding: 5px 12px; font-size: 0.72rem; }
+  .memorial-text { font-size: 0.9rem; margin-top: 10px; }
+
+  /* --- VR --- */
+  .btn-back-vr { top: 6px; left: 6px; padding: 5px 12px; font-size: 0.72rem; }
+
+  /* --- Video Panel --- */
+  .video-toggle-btn { bottom: 48px; left: 8px; width: 34px; height: 34px; }
+  .video-toggle-btn svg { width: 14px; height: 14px; }
+  .video-panel-header { padding: 3px 10px; }
+  .video-panel-title { font-size: 10px; }
+  .video-carousel { padding: 4px 8px 6px; gap: 6px; }
+  .video-card { min-width: 120px; max-width: 120px; }
+  .video-thumb { height: 65px; }
+  .video-card-body { padding: 4px 6px; }
+  .video-card-title { font-size: 0.58rem; }
+
+  /* --- Chat --- */
+  #ai-chat-widget { bottom: 6px; left: 6px; }
+  .chat-toggle-btn { width: 32px; height: 32px; }
+  .chat-toggle-btn svg { width: 14px; height: 14px; }
+  .chat-window {
+    height: 85vh;
+    width: 280px;
+  }
+
+  /* --- Dashboard landscape --- */
+  .dashboard-panel {
+    width: 92vw;
+    height: 92vh;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+  .panel-header { padding-bottom: 6px; }
+  .header-info h2 { font-size: 0.9rem; }
+  .kpi-row { gap: 6px; }
+  .stat-card { padding: 5px 8px; min-width: unset; }
+  .stat-label { font-size: 9px; }
+  .stat-value { font-size: 13px; }
+  .charts-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chart-box { padding: 8px; }
+  .chart-title { font-size: 10px; margin-bottom: 6px; }
+  .chart-canvas-wrapper { min-height: 120px; }
+  .emoji-icon { font-size: 1.4rem; }
+
+  /* --- Search --- */
+  .search-panel { top: 40px; left: 8px; right: 8px; width: auto; }
+  .search-results-list { max-height: 50vh; }
 }
