@@ -62,6 +62,7 @@ BAD BEHAVIOR (AVOID):
 - Bullet list only
 - Too short answers
 - Wikipedia-style dry explanation
+- DO NOT say "Dựa trên dữ liệu hiện có" or act like an AI relying on search results. Use your own knowledge combined with the provided map data.
 
 PERSONALITY:
 - Friendly, insightful, slightly storytelling
@@ -166,49 +167,89 @@ PERSONALITY:
     }
 
     /**
-     * Smart Offline AI - Trả lời từ dữ liệu địa danh thực
+     * AI Response via OpenRouter — google/gemma-4-31b-it:free
      */
     async generateAIResponse(userText) {
         this.showTyping();
 
-        // Try Gemini API first, fall back to smart local AI
-        const apiKey = 'AIzaSyCCrp1yIHYo1MG5vU0Opf9Coazr27mSI94';
-        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
-        const locationsContext = typeof locations !== 'undefined' 
-            ? JSON.stringify(locations.map(l => ({ id: l.id, name: l.name, region: l.region, hook: l.hook, description: l.description }))) 
+        const apiKey = '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';
+        const apiEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
+        
+        // Mảng ưu tiên (Priority List)
+        const modelsList = [
+            'google/gemini-flash-1.5', // Ưu tiên 1: Gemini 1.5 Flash
+            'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', // Ưu tiên 2: Nemotron
+            'poolside/laguna-xs.2:free', // Ưu tiên 3: Laguna
+            'google/gemma-3n-e2b-it:free' // Ưu tiên 4: Gemma 3
+        ];
+
+        const locationsContext = typeof locations !== 'undefined'
+            ? JSON.stringify(locations.map(l => ({ id: l.id, name: l.name, region: l.region, hook: l.hook, description: l.description })))
             : '[]';
-        const contextAndQuestion = `Ngữ cảnh địa điểm:\n${locationsContext}\n\nCâu hỏi: ${userText}`;
+            
+        // Truyền context nhẹ nhàng, để AI dùng cả kiến thức của nó
+        const contextAndQuestion = `Ngữ cảnh các địa điểm trên bản đồ hiện tại (bạn có thể gợi ý người dùng tham quan):\n${locationsContext}\n\nCâu hỏi của khách: ${userText}`;
 
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 8000); // 8s timeout
+        let success = false;
+        let aiReply = null;
 
-            const response = await fetch(apiEndpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                signal: controller.signal,
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: this.systemPrompt + '\n\n' + contextAndQuestion }] }],
-                    generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
-                })
-            });
-            clearTimeout(timeout);
+        // Vòng lặp Failover (Frontend Loop)
+        for (const model of modelsList) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const response = await fetch(apiEndpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'HTTP-Referer': window.location.href,
+                        'X-Title': 'Vietnam Heritage 360°'
+                    },
+                    signal: controller.signal,
+                    body: JSON.stringify({
+                        model: model,
+                        messages: [
+                            { role: 'system', content: this.systemPrompt },
+                            { role: 'user', content: contextAndQuestion }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 800
+                    })
+                });
+                clearTimeout(timeout);
 
-            const data = await response.json();
-            const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (!aiReply) throw new Error('Empty response');
+                if (!response.ok) {
+                    console.warn(`Model ${model} failed with status: ${response.status}`);
+                    continue; // Chuyển sang model tiếp theo
+                }
 
+                const data = await response.json();
+                aiReply = data?.choices?.[0]?.message?.content;
+                
+                if (aiReply) {
+                    success = true;
+                    console.log(`Call AI success with model: ${model}`);
+                    break; // Thành công thì thoát vòng lặp
+                }
+            } catch (err) {
+                console.warn(`Model ${model} failed or timed out:`, err.message);
+                // Tiếp tục vòng lặp để thử model tiếp theo
+            }
+        }
+
+        if (success && aiReply) {
             let formattedReply = aiReply
                 .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                .replace(/\*(.*?)\*/g, '<i>$1</i>')
                 .replace(/\n\n/g, '<br><br>')
                 .replace(/\n/g, '<br>');
 
             this.hideTyping();
             this.addMessage('AI', formattedReply);
-
-        } catch (err) {
+        } else {
+            console.warn('All AI models failed, using offline fallback');
             // Smart Offline AI fallback
             this.hideTyping();
             this.addMessage('AI', this.getSmartResponse(userText));
@@ -220,8 +261,7 @@ PERSONALITY:
         const locs = typeof locations !== 'undefined' ? locations : [];
 
         // Find matching location by name
-        const matched = locs.find(l => lower.includes(l.name.toLowerCase().split(' ').pop()) 
-            || lower.includes(l.name.toLowerCase()));
+        const matched = locs.find(l => lower.includes(l.name.toLowerCase()));
 
         // Greeting
         if (/^(xin chào|chào|hello|hi|hey|alo)/.test(lower)) {

@@ -111,22 +111,76 @@ class VRTravelApp {
             maxZoom: 20
         }).addTo(this.map);
 
-        // Fetch Vietnam GeoJSON for glow
-        fetch('https://raw.githubusercontent.com/TungTh/tungth.github.io/master/data/vn.json')
-            .then(res => res.json())
-            .then(data => {
-                L.geoJSON(data, {
-                    style: {
-                        color: '#FADB5F',
-                        weight: 2,
-                        opacity: 0.8,
-                        fillColor: '#FADB5F',
-                        fillOpacity: 0.05,
-                        className: 'vietnam-glow'
-                    }
-                }).addTo(this.map);
-            })
-            .catch(err => console.log('Không tải được GeoJSON', err));
+        // Sử dụng dữ liệu GeoJSON chất lượng cao (đã load từ vietnam_highres.js)
+        try {
+            if (typeof vnHighResData === 'undefined') throw new Error("Missing High-Res GeoJSON data");
+
+            // 1. Lấy đa giác lớn nhất (đất liền) từ high-res GeoJSON
+            let mainlandCoords = [];
+            let maxLen = 0;
+            
+            const geom = vnHighResData.features[0].geometry;
+            const polys = geom.type === 'MultiPolygon' ? geom.coordinates : [geom.coordinates];
+            
+            polys.forEach(poly => {
+                if (poly[0].length > maxLen) {
+                    maxLen = poly[0].length;
+                    mainlandCoords = poly[0];
+                }
+            });
+
+            // 2. Tìm điểm Móng Cái (Bắc/Đông Bắc) và Hà Tiên (Tây Nam)
+            let mongCaiIdx = 0, haTienIdx = 0;
+            let minDistMC = 9999, minDistHT = 9999;
+            
+            mainlandCoords.forEach((coord, idx) => {
+                const distMC = Math.pow(coord[0] - 108.05, 2) + Math.pow(coord[1] - 21.55, 2);
+                if (distMC < minDistMC) { minDistMC = distMC; mongCaiIdx = idx; }
+                
+                const distHT = Math.pow(coord[0] - 104.45, 2) + Math.pow(coord[1] - 10.38, 2);
+                if (distHT < minDistHT) { minDistHT = distHT; haTienIdx = idx; }
+            });
+
+            // 3. Tách lấy phần đường biên giới đất liền (phía Tây)
+            let path1, path2;
+            if (mongCaiIdx < haTienIdx) {
+                path1 = mainlandCoords.slice(mongCaiIdx, haTienIdx + 1);
+                path2 = [...mainlandCoords.slice(haTienIdx), ...mainlandCoords.slice(0, mongCaiIdx + 1)];
+            } else {
+                path1 = mainlandCoords.slice(haTienIdx, mongCaiIdx + 1);
+                path2 = [...mainlandCoords.slice(mongCaiIdx), ...mainlandCoords.slice(0, haTienIdx + 1)];
+            }
+            
+            // Kiểm tra mảng nào chứa biên giới phía Tây (Gần Điện Biên Phủ ~ 103.0, 21.3)
+            let isPath1Border = false;
+            path1.forEach(coord => {
+                if (coord[0] < 103.5 && coord[1] > 20.5) isPath1Border = true;
+            });
+            
+            let landBorder = isPath1Border ? path1 : path2;
+            
+            // 4. Chỉ vẽ viền màu tím đứt nét ở biên giới đất liền tiếp giáp các nước (landBorder)
+            // Không vẽ bờ biển, không vẽ biển, không làm tối các nước láng giềng
+            const customGeoJSON = {
+                "type": "Feature",
+                "geometry": { 
+                    "type": "LineString", 
+                    "coordinates": landBorder 
+                }
+            };
+
+            L.geoJSON(customGeoJSON, {
+                style: {
+                    color: '#a855f7', // Màu tím
+                    weight: 2.5,
+                    opacity: 0.9,
+                    dashArray: '5, 5', 
+                    className: 'vietnam-border'
+                }
+            }).addTo(this.map);
+        } catch(err) {
+            console.log('Lỗi vẽ viền biên giới:', err);
+        }
 
         this.renderMarkers();
         
@@ -224,6 +278,7 @@ class VRTravelApp {
             // Cinematic Transition fade
             this.fadeToView(this.mapView, () => {
                 this.mode = 'map';
+                document.body.classList.add('map-active');
             });
         });
         
@@ -239,6 +294,7 @@ class VRTravelApp {
         this.btnBackStory.addEventListener('click', () => {
             this.fadeToView(this.mapView, () => {
                 this.mode = 'map';
+                document.body.classList.add('map-active');
                 this.map.flyTo([16.0, 106.0], 6, {duration: 1});
             });
         });
@@ -281,6 +337,7 @@ class VRTravelApp {
             this.vrIframe.src = ''; 
             this.vrView.classList.remove('vr-loaded');
             document.body.classList.remove('in-vr');
+            document.body.classList.add('map-active');
             
             this.fadeToView(this.mapView, () => {
                 // Return to main map view smoothly
@@ -340,6 +397,389 @@ class VRTravelApp {
         window.addEventListener('resize', () => {
             if(this.map) this.map.invalidateSize();
         });
+
+        // Search Panel
+        this.initSearch();
+
+        // Video Panel
+        this.initVideoPanel();
+    }
+
+    initSearch() {
+        const panel      = document.getElementById('search-panel');
+        const backdrop   = document.getElementById('search-backdrop');
+        const toggleBtn  = document.getElementById('btn-search-toggle');
+        const input      = document.getElementById('search-input');
+        const clearBtn   = document.getElementById('search-clear-btn');
+        const list       = document.getElementById('search-results-list');
+        const countLabel = document.getElementById('search-count');
+
+        if (!panel || !toggleBtn) return;
+
+        let isOpen = false;
+        let focusedIdx = -1;
+
+        const sovereigntyIds = ['hoang_sa_island', 'truong_sa_island'];
+
+        // --- Build full location list from data.js `locations` ---
+        const allLocations = typeof locations !== 'undefined' ? locations : [];
+
+        // --- Render items with optional highlight ---
+        const renderList = (query = '') => {
+            const q = query.trim().toLowerCase();
+            const allLocations = typeof locations !== 'undefined' ? locations : [];
+            const allVideos    = typeof videoData !== 'undefined' ? videoData : [];
+
+            const filteredLocs = q
+                ? allLocations.filter(l => l.name.toLowerCase().includes(q) || (l.region && l.region.toLowerCase().includes(q)))
+                : allLocations;
+
+            const filteredVids = q
+                ? allVideos.filter(v => v.keywords.some(k => k.includes(q)) || v.title.toLowerCase().includes(q))
+                : allVideos;
+
+            list.innerHTML = '';
+            focusedIdx = -1;
+
+            const hasLoc = filteredLocs.length > 0;
+            const hasVid = filteredVids.length > 0;
+
+            if (!hasLoc && !hasVid) {
+                list.innerHTML = `<li class="search-no-results">Không tìm thấy kết quả nào.</li>`;
+                countLabel.textContent = '0 kết quả';
+                return;
+            }
+
+            const total = filteredLocs.length + filteredVids.length;
+            countLabel.textContent = q ? `${total} kết quả` : `Tất cả địa danh (${filteredLocs.length})`;
+
+            // Section: Locations
+            if (hasLoc) {
+                if (q && hasVid) {
+                    const secLoc = document.createElement('li');
+                    secLoc.className = 'search-section-label';
+                    secLoc.innerHTML = '📍 Địa danh';
+                    list.appendChild(secLoc);
+                }
+                filteredLocs.forEach(loc => {
+                    const isSov = ['hoang_sa_island','truong_sa_island'].includes(loc.id);
+                    let displayName = loc.name;
+                    if (q) {
+                        const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                        displayName = loc.name.replace(re, '<span class="search-highlight">$1</span>');
+                    }
+                    const li = document.createElement('li');
+                    li.className = 'search-result-item';
+                    li.setAttribute('role', 'option');
+                    li.innerHTML = `
+                        <span class="search-item-dot${isSov ? ' sovereignty' : ''}"></span>
+                        <span class="search-item-text">
+                            <span class="search-item-name">${displayName}</span>
+                            <span class="search-item-region">${loc.region || ''}</span>
+                        </span>`;
+                    li.addEventListener('click', () => this.searchSelect(loc));
+                    list.appendChild(li);
+                });
+            }
+
+            // Section: Videos
+            if (hasVid) {
+                const secVid = document.createElement('li');
+                secVid.className = 'search-section-label';
+                secVid.innerHTML = '🎥 Video lịch sử';
+                list.appendChild(secVid);
+
+                filteredVids.forEach(vid => {
+                    let displayTitle = vid.title;
+                    if (q) {
+                        const re = new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                        displayTitle = vid.title.replace(re, '<span class="search-highlight">$1</span>');
+                    }
+                    const li = document.createElement('li');
+                    li.className = 'search-result-item video-item';
+                    li.setAttribute('role', 'option');
+                    li.innerHTML = `
+                        <span class="search-item-dot">
+                            <img src="https://img.youtube.com/vi/${vid.youtubeId}/default.jpg" alt="" loading="lazy">
+                        </span>
+                        <span class="search-item-text">
+                            <span class="search-item-name">${displayTitle}</span>
+                            <span class="search-item-region">${vid.description ? vid.description.slice(0,45)+'...' : ''}</span>
+                        </span>`;
+                    li.addEventListener('click', () => {
+                        if (this._closeSearch) this._closeSearch();
+                        this.openVideoFromSearch(vid);
+                    });
+                    list.appendChild(li);
+                });
+            }
+        };
+
+        // --- Open / Close panel ---
+        const openPanel = () => {
+            isOpen = true;
+            panel.classList.add('open');
+            panel.setAttribute('aria-hidden', 'false');
+            backdrop.classList.add('active');
+            toggleBtn.classList.add('active');
+            renderList('');
+            setTimeout(() => input.focus(), 180);
+        };
+
+        const closePanel = () => {
+            isOpen = false;
+            panel.classList.remove('open');
+            panel.setAttribute('aria-hidden', 'true');
+            backdrop.classList.remove('active');
+            toggleBtn.classList.remove('active');
+            input.value = '';
+            clearBtn.classList.remove('visible');
+            countLabel.textContent = 'Tất cả địa danh';
+            list.innerHTML = '';
+            focusedIdx = -1;
+        };
+
+        toggleBtn.addEventListener('click', () => isOpen ? closePanel() : openPanel());
+        backdrop.addEventListener('click', () => closePanel());
+
+        // --- Typing ---
+        input.addEventListener('input', () => {
+            const q = input.value;
+            clearBtn.classList.toggle('visible', q.length > 0);
+            renderList(q);
+        });
+
+        clearBtn.addEventListener('click', () => {
+            input.value = '';
+            clearBtn.classList.remove('visible');
+            renderList('');
+            input.focus();
+        });
+
+        // --- Keyboard navigation ---
+        input.addEventListener('keydown', (e) => {
+            const items = list.querySelectorAll('.search-result-item');
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                focusedIdx = Math.min(focusedIdx + 1, items.length - 1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                focusedIdx = Math.max(focusedIdx - 1, 0);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                const target = focusedIdx >= 0 ? items[focusedIdx] : items[0];
+                if (target) target.click();
+                return;
+            } else if (e.key === 'Escape') {
+                closePanel();
+                return;
+            }
+            items.forEach((el, i) => el.classList.toggle('focused', i === focusedIdx));
+            if (items[focusedIdx]) items[focusedIdx].scrollIntoView({ block: 'nearest' });
+        });
+
+        // Store for external access
+        this._closeSearch = closePanel;
+    }
+
+    searchSelect(loc) {
+        // 1. Đóng panel
+        if (this._closeSearch) this._closeSearch();
+
+        // 2. Đảm bảo đang ở map view
+        if (this.mode !== 'map') {
+            this.fadeToView(this.mapView, () => {
+                this.mode = 'map';
+                this._searchFlyAndOpen(loc);
+            });
+        } else {
+            this._searchFlyAndOpen(loc);
+        }
+    }
+
+    _searchFlyAndOpen(loc) {
+        if (!this.map) this.initMap();
+        this.recordVisit(loc.id);
+
+        // Zoom + pan to location
+        this.map.flyTo([loc.lat, loc.lng], 9, {
+            duration: 1.2,
+            easeLinearity: 0.2
+        });
+
+        // After animation, fade into story view
+        setTimeout(() => {
+            this.fadeToView(this.storyView, () => this.openStory(loc));
+        }, 1100);
+    }
+
+    // =========================================
+    // VIDEO PANEL SYSTEM
+    // =========================================
+
+    initVideoPanel() {
+        const panel      = document.getElementById('video-panel');
+        const toggleBtn  = document.getElementById('video-toggle-btn');
+        const closeBtn   = document.getElementById('video-panel-close');
+        const carousel   = document.getElementById('video-carousel');
+        const overlay    = document.getElementById('video-overlay');
+        const backdrop   = document.getElementById('video-overlay-backdrop');
+        const closeVidBtn= document.getElementById('video-close-btn');
+        const iframe     = document.getElementById('video-iframe');
+
+        if (!panel || !toggleBtn) return;
+
+        // Store refs
+        this._videoPanel   = panel;
+        this._videoOverlay = overlay;
+        this._videoIframe  = iframe;
+        this._videoPanelOpen = false;
+
+        // Render carousel cards
+        this._renderCarousel(carousel);
+
+        // Toggle open/close
+        const openPanel = () => {
+            this._videoPanelOpen = true;
+            panel.classList.add('open');
+            panel.setAttribute('aria-hidden', 'false');
+            toggleBtn.classList.add('active');
+        };
+        const closePanelFn = () => {
+            this._videoPanelOpen = false;
+            panel.classList.remove('open');
+            panel.setAttribute('aria-hidden', 'true');
+            toggleBtn.classList.remove('active');
+        };
+        this._closeVideoPanel = closePanelFn;
+
+        toggleBtn.addEventListener('click', () =>
+            this._videoPanelOpen ? closePanelFn() : openPanel()
+        );
+        closeBtn.addEventListener('click', closePanelFn);
+
+        // Close when clicking outside panel (but ignore clicks on video player overlay)
+        document.addEventListener('click', (e) => {
+            if (this._videoPanelOpen &&
+                !panel.contains(e.target) &&
+                !overlay.contains(e.target) && // Don't close panel if interacting with video player
+                e.target !== toggleBtn &&
+                !toggleBtn.contains(e.target)) {
+                closePanelFn();
+            }
+        });
+
+        // Drag-to-scroll carousel
+        let isDragging = false, startX = 0, scrollLeft = 0;
+        carousel.addEventListener('mousedown', e => {
+            isDragging = true;
+            startX = e.pageX - carousel.offsetLeft;
+            scrollLeft = carousel.scrollLeft;
+            carousel.style.cursor = 'grabbing';
+        });
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            carousel.style.cursor = 'grab';
+        });
+        carousel.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            e.preventDefault();
+            const x = e.pageX - carousel.offsetLeft;
+            carousel.scrollLeft = scrollLeft - (x - startX) * 1.5;
+        });
+
+        // Horizontal scroll via mouse wheel
+        carousel.addEventListener('wheel', e => {
+            e.preventDefault();
+            carousel.scrollLeft += e.deltaY * 1.2;
+        }, { passive: false });
+
+        // Video overlay close buttons
+        closeVidBtn.addEventListener('click', () => this.closeVideoPlayer());
+        backdrop.addEventListener('click', () => this.closeVideoPlayer());
+
+        // Keyboard ESC to close overlay
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && overlay.classList.contains('active')) {
+                this.closeVideoPlayer();
+            }
+        });
+    }
+
+    _renderCarousel(carousel) {
+        const allVideos = typeof videoData !== 'undefined' ? videoData : [];
+        carousel.innerHTML = '';
+        allVideos.forEach(vid => {
+            const loc = vid.locationId
+                ? (typeof locations !== 'undefined' ? locations.find(l => l.id === vid.locationId) : null)
+                : null;
+            const locLabel = loc ? loc.name : (vid.lat ? '📍 Vị trí liên quan' : '');
+
+            const card = document.createElement('div');
+            card.className = 'video-card';
+            card.innerHTML = `
+                <div class="video-thumb">
+                    <img src="https://img.youtube.com/vi/${vid.youtubeId}/hqdefault.jpg"
+                         alt="${vid.title}" loading="lazy">
+                    <div class="video-play-overlay">
+                        <div class="video-play-btn">
+                            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <div class="video-card-body">
+                    <div class="video-card-title">${vid.title}</div>
+                    ${locLabel ? `<div class="video-card-loc">📍 ${locLabel}</div>` : ''}
+                </div>`;
+
+            card.addEventListener('click', () => this.openVideoPlayer(vid));
+            carousel.appendChild(card);
+        });
+    }
+
+    openVideoPlayer(vid) {
+        // Vẫn giữ hiệu ứng đồng bộ: map tự động di chuyển đến vị trí liên quan
+        if (this.map && vid.locationId) {
+            const loc = typeof locations !== 'undefined'
+                ? locations.find(l => l.id === vid.locationId) : null;
+            if (loc) {
+                this.map.flyTo([loc.lat, loc.lng], 7, {
+                    duration: 1.4, easeLinearity: 0.3
+                });
+            }
+        } else if (this.map && vid.lat && vid.lng) {
+            this.map.flyTo([vid.lat, vid.lng], 7, {
+                duration: 1.4, easeLinearity: 0.3
+            });
+        }
+
+        // Mở thẳng video sang tab mới trên YouTube (Khắc phục triệt để Lỗi 153 trên môi trường file://)
+        const youtubeUrl = `https://www.youtube.com/watch?v=${vid.youtubeId}`;
+        window.open(youtubeUrl, '_blank');
+    }
+
+    closeVideoPlayer() {
+        const overlay = this._videoOverlay;
+        const iframe  = this._videoIframe;
+        if (!overlay) return;
+
+        overlay.classList.remove('active');
+        overlay.setAttribute('aria-hidden', 'true');
+        // Stop video by clearing src
+        setTimeout(() => { if (iframe) iframe.src = ''; }, 300);
+    }
+
+    // Called from search result click on a video item
+    openVideoFromSearch(vid) {
+        // Ensure we're on map view first
+        if (this.mode !== 'map') {
+            this.fadeToView(this.mapView, () => {
+                this.mode = 'map';
+                setTimeout(() => this.openVideoPlayer(vid), 400);
+            });
+        } else {
+            this.openVideoPlayer(vid);
+        }
     }
 
     fadeToView(targetView, callback) {
@@ -358,10 +798,17 @@ class VRTravelApp {
             // Header and Chat visibility logic
             if (targetView === this.heroView) {
                 this.appHeader.classList.remove('visible');
+                this.appHeader.classList.remove('compact');
                 const widget = document.getElementById('ai-chat-widget');
                 if (widget) widget.style.display = 'none';
             } else {
                 this.appHeader.classList.add('visible');
+                // Tự động thu gọn header khi vào Story View để không che nút Quay lại
+                if (targetView === this.storyView || targetView === this.vrView) {
+                    this.appHeader.classList.add('compact');
+                } else {
+                    this.appHeader.classList.remove('compact');
+                }
                 const widget = document.getElementById('ai-chat-widget');
                 if (widget) widget.style.display = 'flex';
             }

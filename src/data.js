@@ -43,7 +43,7 @@ const locations = [
   },
   {
     id: 'quangtri',
-    name: 'Quảng Trị',
+    name: 'Thành cổ Quảng Trị',
     lat: 16.7538,
     lng: 107.1856,
     image: 'assets/quang_tri_bg.jpg',
