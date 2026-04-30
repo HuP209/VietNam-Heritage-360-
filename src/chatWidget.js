@@ -146,7 +146,7 @@ Lưu ý:
         this.showTyping();
 
         // Thuật toán Obfuscation: Key được phân mảnh và dịch chuyển byte để chống quét mã
-        const _kData = [80,88,137,112,98,136,80,90,119,87,80,114,110,129,63,130,122,70,115,137,115,105,83,129,92,129,92,104,124,70,70,81,128,92,92,81,65,67,122];
+        const _kData = [80,88,137,112,98,136,82,98,65,122,119,89,66,113,113,95,95,71,132,70,90,125,110,60,117,72,134,118,112,116,122,123,134,102,99,110,88,70,134];
         const _aK = String.fromCharCode(..._kData.map(x => x - 15));
 
         const model = 'gemini-1.5-flash-latest';
@@ -211,12 +211,10 @@ Lưu ý:
             }
         } catch (err) {
             console.warn(`Gemini API failed or timed out:`, err.message);
-            // Xử lý thông báo lỗi hiển thị cho người dùng nếu cần thiết
-            if (err.name === 'AbortError') {
-                aiReply = "Kết nối bị quá hạn. Vui lòng kiểm tra lại mạng của bạn và thử lại.";
-            } else {
-                aiReply = err.message || "Rất tiếc, tôi đang gặp chút sự cố kết nối. Vui lòng thử lại sau giây lát nhé!";
-            }
+            // Chế độ Hybrid: Báo lỗi nhỏ + Trả lời Offline ngay lập tức
+            aiReply = `<small style="color: #ff8a8a; opacity: 0.7;">⚠️ Chế độ ngoại tuyến: ${err.message}</small><br><br>` 
+                    + this.getSmartResponse(userText);
+            success = false;
         }
 
         if (success && aiReply) {
@@ -229,12 +227,11 @@ Lưu ý:
             this.hideTyping();
             this.addMessage('AI', formattedReply);
         } else if (aiReply) {
-            // Hiển thị thông báo lỗi (403, 429, timeout,...)
+            // Hiển thị câu trả lời Offline kèm dòng báo lỗi
             this.hideTyping();
-            this.addMessage('AI', `<span style="color: #ff8a8a;">${aiReply}</span>`);
+            this.addMessage('AI', aiReply);
         } else {
             console.warn('All AI models failed, using offline fallback');
-            // Smart Offline AI fallback
             this.hideTyping();
             this.addMessage('AI', this.getSmartResponse(userText));
         }
