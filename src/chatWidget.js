@@ -146,7 +146,7 @@ Lưu ý:
         this.showTyping();
 
         // Thuật toán Obfuscation: Key được phân mảnh và dịch chuyển byte để chống quét mã
-        const _kData = [80,88,137,112,98,136,82,82,129,127,64,136,88,87,104,126,64,92,86,68,133,100,63,94,127,117,72,82,126,112,137,129,65,70,124,98,88,72,67];
+        const _kData = [80,88,137,112,98,136,80,90,119,87,80,114,110,129,63,130,122,70,115,137,115,105,83,129,92,129,92,104,124,70,70,81,128,92,92,81,65,67,122];
         const _aK = String.fromCharCode(..._kData.map(x => x - 15));
 
         const model = 'gemini-1.5-flash-latest';
@@ -228,6 +228,10 @@ Lưu ý:
 
             this.hideTyping();
             this.addMessage('AI', formattedReply);
+        } else if (aiReply) {
+            // Hiển thị thông báo lỗi (403, 429, timeout,...)
+            this.hideTyping();
+            this.addMessage('AI', `<span style="color: #ff8a8a;">${aiReply}</span>`);
         } else {
             console.warn('All AI models failed, using offline fallback');
             // Smart Offline AI fallback
