@@ -27,47 +27,16 @@ class AIChatWidget {
     }
 
     buildSystemPrompt() {
-        // Automatically extract locations exactly as requested
+        // Tích hợp thiết lập AI từ Google AI Studio (App.tsx / gemini.ts)
         const locationNames = typeof locations !== 'undefined' ? locations.map(l => l.name).join(', ') : 'Việt Nam';
-        this.systemPrompt = `You are "Vietnam Heritage AI Guide" – a highly intelligent, natural, and insightful AI tour guide.
-
-You are NOT a scripted bot. You must think, understand, and respond naturally like a real human tour guide.
-
-GOAL:
-Help users explore Vietnam's destinations, culture, history, and travel experiences in a vivid, engaging, and useful way.
-
-LANGUAGE:
-- Default: Vietnamese
-- If user uses English → respond in English
-- Use natural spoken tone, not robotic, not textbook
-
-RESPONSE STYLE:
-- Do NOT give generic or shallow answers
-- Write like a real guide talking to a traveler
-- Combine: Explanation, Context (history/culture), Real experience, Practical advice
-
-STRUCTURE (flexible, not rigid):
-- Start naturally (like talking, not listing)
-- Then explain deeper
-- Add travel tips if relevant
-- End with a suggestion or follow-up idea
-
-DEPTH REQUIREMENT:
-For any location, try to include: why it matters, what makes it unique, what visitors experience, and at least 1 useful tip.
-
-AVAILABLE LOCATIONS ON MAP (You can recommend these):
+        this.systemPrompt = `Bạn là một hướng dẫn viên du lịch chuyên nghiệp và nhà sử học am hiểu sâu sắc về Việt Nam. Hãy trả lời các câu hỏi về địa điểm tham quan, văn hóa, ẩm thực và các sự kiện lịch sử Việt Nam một cách hào hứng, chi tiết và chính xác. Ngôn ngữ: Tiếng Việt. Phong cách: Thân thiện, lịch sự.
+        
+Dưới đây là danh sách các địa danh đang có trên bản đồ 360° của trang web mà bạn có thể gợi ý cho khách:
 ${locationNames}
 
-BAD BEHAVIOR (AVOID):
-- Bullet list only
-- Too short answers
-- Wikipedia-style dry explanation
-- DO NOT say "Dựa trên dữ liệu hiện có" or act like an AI relying on search results. Use your own knowledge combined with the provided map data.
-
-PERSONALITY:
-- Friendly, insightful, slightly storytelling
-- Like a local guide who knows hidden things
-- Uses light emojis (🌿🏯🌊) but not too many. Always include at least one cultural insight and one practical travel tip in your answer.`;
+Lưu ý:
+- Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu.
+- Có thể thêm các gợi ý thực tế về trải nghiệm du lịch.`;
     }
 
     bindEvents() {
@@ -172,16 +141,9 @@ PERSONALITY:
     async generateAIResponse(userText) {
         this.showTyping();
 
-        const apiKey = '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';
-        const apiEndpoint = 'https://openrouter.ai/api/v1/chat/completions';
-        
-        // Mảng ưu tiên (Priority List)
-        const modelsList = [
-            'google/gemini-flash-1.5', // Ưu tiên 1: Gemini 1.5 Flash
-            'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', // Ưu tiên 2: Nemotron
-            'poolside/laguna-xs.2:free', // Ưu tiên 3: Laguna
-            'google/gemma-3n-e2b-it:free' // Ưu tiên 4: Gemma 3
-        ];
+        const apiKey = 'AIzaSyC5jFJYQthLTLEqNTvkVmtuM-6KZCPjPjU';
+        const model = 'gemini-flash-latest';
+        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
 
         const locationsContext = typeof locations !== 'undefined'
             ? JSON.stringify(locations.map(l => ({ id: l.id, name: l.name, region: l.region, hook: l.hook, description: l.description })))
@@ -193,49 +155,57 @@ PERSONALITY:
         let success = false;
         let aiReply = null;
 
-        // Vòng lặp Failover (Frontend Loop)
-        for (const model of modelsList) {
-            try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-                const response = await fetch(apiEndpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`,
-                        'HTTP-Referer': window.location.href,
-                        'X-Title': 'Vietnam Heritage 360°'
+            const response = await fetch(apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-goog-api-key': apiKey
+                },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    systemInstruction: {
+                        parts: [{ text: this.systemPrompt }]
                     },
-                    signal: controller.signal,
-                    body: JSON.stringify({
-                        model: model,
-                        messages: [
-                            { role: 'system', content: this.systemPrompt },
-                            { role: 'user', content: contextAndQuestion }
-                        ],
+                    contents: [{
+                        parts: [{ text: contextAndQuestion }]
+                    }],
+                    generationConfig: {
                         temperature: 0.7,
-                        max_tokens: 800
-                    })
-                });
-                clearTimeout(timeout);
+                        maxOutputTokens: 4096
+                    }
+                })
+            });
+            clearTimeout(timeout);
 
-                if (!response.ok) {
-                    console.warn(`Model ${model} failed with status: ${response.status}`);
-                    continue; // Chuyển sang model tiếp theo
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.warn(`Gemini API failed with status: ${response.status}`, errorData);
+                // Nếu vượt quá giới hạn 15 RPM, API sẽ trả về lỗi 429
+                if (response.status === 429) {
+                    throw new Error("Quá giới hạn 15 tin nhắn/phút. Vui lòng chờ 1 phút rồi thử lại.");
+                } else {
+                    throw new Error("Có lỗi xảy ra khi kết nối tới máy chủ AI.");
                 }
+            }
 
-                const data = await response.json();
-                aiReply = data?.choices?.[0]?.message?.content;
-                
-                if (aiReply) {
-                    success = true;
-                    console.log(`Call AI success with model: ${model}`);
-                    break; // Thành công thì thoát vòng lặp
-                }
-            } catch (err) {
-                console.warn(`Model ${model} failed or timed out:`, err.message);
-                // Tiếp tục vòng lặp để thử model tiếp theo
+            const data = await response.json();
+            aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            
+            if (aiReply) {
+                success = true;
+                console.log(`Call AI success with model: ${model}`);
+            }
+        } catch (err) {
+            console.warn(`Gemini API failed or timed out:`, err.message);
+            // Xử lý thông báo lỗi hiển thị cho người dùng nếu cần thiết
+            if (err.name === 'AbortError') {
+                aiReply = "Kết nối bị quá hạn. Vui lòng kiểm tra lại mạng của bạn và thử lại.";
+            } else {
+                aiReply = err.message || "Rất tiếc, tôi đang gặp chút sự cố kết nối. Vui lòng thử lại sau giây lát nhé!";
             }
         }
 
