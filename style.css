@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   --color-bg-dark: #0A192F;
   --color-text-light: #FFFFFF;
   --color-accent: #FADB5F; /* Heritage Tone / Gold */
@@ -48,7 +48,7 @@ h1, h2, h3 {
 }
 
 /* =========================================
-   0. HEADER (Cố định, Minimal, Cao cấp)
+   0. HEADER (Cá»‘ Ä‘á»‹nh, Minimal, Cao cáº¥p)
 ========================================= */
 .app-header {
   position: fixed;
@@ -68,7 +68,7 @@ h1, h2, h3 {
   transform: translateY(0);
 }
 
-/* Header thu gọn khi vào Story View — chỉ hiện logo */
+/* Header thu gá»n khi vÃ o Story View â€” chá»‰ hiá»‡n logo */
 .app-header.compact .header-text,
 .app-header.compact .header-right {
   opacity: 0;
@@ -210,7 +210,7 @@ h1, h2, h3 {
 .hero-overlay {
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  /* Gradient mờ ảo từ giữa xuống dưới */
+  /* Gradient má» áº£o tá»« giá»¯a xuá»‘ng dÆ°á»›i */
   background: linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.85) 100%);
   z-index: 2;
 }
@@ -223,7 +223,7 @@ h1, h2, h3 {
   margin: 0 auto;
   padding: 40px;
   text-align: center;
-  padding-bottom: 80px; /* Cách đáy 80px */
+  padding-bottom: 80px; /* CÃ¡ch Ä‘Ã¡y 80px */
 }
 
 .hero-text {
@@ -288,7 +288,7 @@ h1, h2, h3 {
   transform: translateY(0) scale(0.95);
 }
 
-/* Animations cho Text Hero (Chạy ngay khi vào trang) */
+/* Animations cho Text Hero (Cháº¡y ngay khi vÃ o trang) */
 #hero-view.active #hero-text-1 { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.5s forwards; }
 #hero-view.active #hero-text-2 { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 1.5s forwards; }
 #hero-view.active #hero-text-3 { animation: slideUpFade 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 2.5s forwards; }
@@ -312,12 +312,12 @@ h1, h2, h3 {
   background: #000;
 }
 
-/* Ẩn các label, control mặc định của leaflet */
+/* áº¨n cÃ¡c label, control máº·c Ä‘á»‹nh cá»§a leaflet */
 .leaflet-control-zoom, .leaflet-control-attribution {
   display: none !important;
 }
 
-/* Custom Markers trên Map */
+/* Custom Markers trÃªn Map */
 .custom-marker {
   display: flex;
   align-items: center;
@@ -350,7 +350,7 @@ h1, h2, h3 {
   100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
 }
 
-/* Hover mượt hơn */
+/* Hover mÆ°á»£t hÆ¡n */
 .custom-marker:hover .marker-core {
   transform: scale(1.3);
   background-color: #fff;
@@ -403,7 +403,7 @@ h1, h2, h3 {
   animation: flagWave 3s infinite ease-in-out;
 }
 .island-flag::after {
-  content: "★";
+  content: "â˜…";
   color: #ffff00;
   font-size: 13px;
   line-height: 1;
@@ -451,7 +451,7 @@ h1, h2, h3 {
 .leaflet-tooltip-bottom:before,
 .leaflet-tooltip-left:before,
 .leaflet-tooltip-right:before {
-  border: none !important; /* Bỏ mũi tên mặc định */
+  border: none !important; /* Bá» mÅ©i tÃªn máº·c Ä‘á»‹nh */
 }
 
 /* Custom Zoom Controls */
@@ -462,7 +462,7 @@ h1, h2, h3 {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  z-index: 1000; /* Trên map */
+  z-index: 1000; /* TrÃªn map */
 }
 
 .zoom-btn {
@@ -667,7 +667,7 @@ h1, h2, h3 {
 
 .vr-ui-top {
   position: absolute;
-  top: 80px; /* Dưới header cố định */
+  top: 80px; /* DÆ°á»›i header cá»‘ Ä‘á»‹nh */
   left: 30px; right: 30px;
   display: flex;
   justify-content: flex-end; /* Push location name and audio to right if needed, or space-between */
@@ -1530,11 +1530,11 @@ body.dashboard-active #map-view {
    SEARCH PANEL
    ============================================= */
 
-/* Backdrop blur overlay — phủ toàn màn hình, header vẫn nổi trên nhờ z-index: 1000 */
+/* Backdrop blur overlay â€” phá»§ toÃ n mÃ n hÃ¬nh, header váº«n ná»•i trÃªn nhá» z-index: 1000 */
 .search-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 899; /* thấp hơn header (1000) nên header vẫn hiện rõ */
+  z-index: 899; /* tháº¥p hÆ¡n header (1000) nÃªn header váº«n hiá»‡n rÃµ */
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
@@ -1547,13 +1547,13 @@ body.dashboard-active #map-view {
   pointer-events: all;
 }
 
-/* Panel container — căn thẳng hàng với viền trái header */
+/* Panel container â€” cÄƒn tháº³ng hÃ ng vá»›i viá»n trÃ¡i header */
 .search-panel {
   position: fixed;
-  top: 70px; /* ngay bên dưới header */
-  left: 25px; /* bằng padding-left của .app-header để thẳng hàng */
+  top: 70px; /* ngay bÃªn dÆ°á»›i header */
+  left: 25px; /* báº±ng padding-left cá»§a .app-header Ä‘á»ƒ tháº³ng hÃ ng */
   z-index: 900;
-  width: 350px; /* = min-width của header-container để khớp bề ngang */
+  width: 350px; /* = min-width cá»§a header-container Ä‘á»ƒ khá»›p bá» ngang */
   transform: translateY(-10px) scaleY(0.95);
   transform-origin: top left;
   opacity: 0;
@@ -1660,8 +1660,8 @@ body.dashboard-active #map-view {
   padding: 4px 0 8px;
   max-height: 360px;
   overflow-y: auto;
-  -webkit-overflow-scrolling: touch; /* Mượt mà trên iOS */
-  overscroll-behavior: contain;      /* Ngăn cuộn cả trang khi lướt danh sách */
+  -webkit-overflow-scrolling: touch; /* MÆ°á»£t mÃ  trÃªn iOS */
+  overscroll-behavior: contain;      /* NgÄƒn cuá»™n cáº£ trang khi lÆ°á»›t danh sÃ¡ch */
   scrollbar-width: thin;
   scrollbar-color: rgba(250,219,95,0.25) transparent;
 }
@@ -1738,7 +1738,7 @@ body.dashboard-active #map-view {
 
 /* Arrow chevron on hover */
 .search-result-item::after {
-  content: '›';
+  content: 'â€º';
   position: absolute;
   right: 14px;
   color: rgba(250, 219, 95, 0.4);
@@ -1864,7 +1864,7 @@ body.map-active .video-toggle-btn {
   display: flex;
   gap: 14px;
   padding: 10px 20px 12px;
-  overflow-x: auto; /* Thêm lại thuộc tính cuộn ngang */
+  overflow-x: auto; /* ThÃªm láº¡i thuá»™c tÃ­nh cuá»™n ngang */
   background: rgba(8, 16, 32, 0.95);
   backdrop-filter: blur(20px);
   scrollbar-width: thin;
@@ -2087,7 +2087,7 @@ body.map-active .video-toggle-btn {
   border-radius: 3px;
 }
 .search-result-item.video-item .search-item-dot::after {
-  content: '▶';
+  content: 'â–¶';
   position: absolute;
   inset: 0;
   display: flex;
@@ -2099,11 +2099,11 @@ body.map-active .video-toggle-btn {
 }
 
 /* =============================================
-   RESPONSIVE — TABLET (max-width: 768px)
+   RESPONSIVE â€” TABLET (max-width: 768px)
    ============================================= */
 @media (max-width: 768px) {
 
-  /* --- Chống tràn toàn cục --- */
+  /* --- Chá»‘ng trÃ n toÃ n cá»¥c --- */
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
@@ -2186,11 +2186,11 @@ body.map-active .video-toggle-btn {
 }
 
 /* =============================================
-   RESPONSIVE — ĐIỆN THOẠI (max-width: 480px)
+   RESPONSIVE â€” ÄIá»†N THOáº I (max-width: 480px)
    ============================================= */
 @media (max-width: 480px) {
 
-  /* --- Chống tràn --- */
+  /* --- Chá»‘ng trÃ n --- */
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
@@ -2201,7 +2201,7 @@ body.map-active .video-toggle-btn {
     overflow: hidden;
   }
 
-  /* --- Header siêu gọn --- */
+  /* --- Header siÃªu gá»n --- */
   .app-header { padding: 6px 6px; }
   .header-container {
     padding: 5px 8px;
@@ -2346,7 +2346,7 @@ body.map-active .video-toggle-btn {
 }
 
 /* =============================================
-   RESPONSIVE — MÀN HÌNH RẤT NHỎ (max-width: 360px)
+   RESPONSIVE â€” MÃ€N HÃŒNH Ráº¤T NHá»Ž (max-width: 360px)
    ============================================= */
 @media (max-width: 360px) {
   .header-title { font-size: 0.68rem; }
@@ -2366,7 +2366,7 @@ body.map-active .video-toggle-btn {
 }
 
 /* =============================================
-   RESPONSIVE — DASHBOARD MOBILE FIX
+   RESPONSIVE â€” DASHBOARD MOBILE FIX
    ============================================= */
 @media (max-width: 768px) {
   .dashboard-panel {
@@ -2467,7 +2467,7 @@ body.map-active .video-toggle-btn {
 }
 
 /* =============================================
-   RESPONSIVE — LANDSCAPE (điện thoại nằm ngang)
+   RESPONSIVE â€” LANDSCAPE (Ä‘iá»‡n thoáº¡i náº±m ngang)
    ============================================= */
 @media (max-height: 500px) and (orientation: landscape) {
 
@@ -2492,7 +2492,7 @@ body.map-active .video-toggle-btn {
   .custom-zoom-controls { bottom: 8px; right: 8px; gap: 4px; }
   .zoom-btn { width: 30px; height: 30px; font-size: 0.9rem; }
 
-  /* --- Story View — cuộn dọc khi ngang --- */
+  /* --- Story View â€” cuá»™n dá»c khi ngang --- */
   #story-view {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -2551,3 +2551,7 @@ body.map-active .video-toggle-btn {
   .search-panel { top: 40px; left: 8px; right: 8px; width: auto; }
   .search-results-list { max-height: 50vh; }
 }
+/* Chat Status Dot Logic */
+.chat-status { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.chat-status::before { content: ''; display: inline-block; width: 8px; height: 8px; background-color: #2ecc71; border-radius: 50%; box-shadow: 0 0 5px rgba(46, 204, 113, 0.5); transition: background-color 0.3s ease; }
+.chat-status.offline::before { background-color: #ff6b6b; box-shadow: 0 0 5px rgba(255, 107, 107, 0.5); }
