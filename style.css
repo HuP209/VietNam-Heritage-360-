@@ -6,7 +6,7 @@
   --color-overlay: rgba(10, 25, 47, 0.7);
   
   --font-title: 'Agbalumo', cursive;
-  --font-body: 'Times New Roman', Times, serif;
+  --font-body: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-premium: 'Cormorant Garamond', serif; /* Replacement for Lavonia Classy */
 }
 
@@ -227,6 +227,7 @@ h1, h2, h3 {
 }
 
 .hero-text {
+  font-family: 'Times New Roman', Times, serif;
   font-size: 1.5rem;
   line-height: 1.6;
   margin-bottom: 20px;
@@ -1738,7 +1739,7 @@ body.dashboard-active #map-view {
 
 /* Arrow chevron on hover */
 .search-result-item::after {
-  content: 'â€º';
+  content: "\203A";
   position: absolute;
   right: 14px;
   color: rgba(250, 219, 95, 0.4);
@@ -2087,7 +2088,7 @@ body.map-active .video-toggle-btn {
   border-radius: 3px;
 }
 .search-result-item.video-item .search-item-dot::after {
-  content: 'â–¶';
+  content: "\25B6";
   position: absolute;
   inset: 0;
   display: flex;
@@ -2467,7 +2468,7 @@ body.map-active .video-toggle-btn {
 }
 
 /* =============================================
-   RESPONSIVE â€” LANDSCAPE (Ä‘iá»‡n thoáº¡i náº±m ngang)
+   RESPONSIVE — LANDSCAPE (Điện thoại nằm ngang)
    ============================================= */
 @media (max-height: 500px) and (orientation: landscape) {
 
