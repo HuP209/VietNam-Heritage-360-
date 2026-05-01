@@ -106,24 +106,34 @@ Lưu ý: Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu, có th
     async generateAIResponse(userText) {
         this.showTyping();
 
-        // Obfuscated Key (bảo mật API key tránh quét tự động trên GitHub)
         const _0xkey = [65, 73, 122, 97, 83, 121, 67, 83, 50, 107, 104, 74, 51, 98, 98, 80, 80, 56, 117, 55, 75, 110, 95, 45, 102, 57, 119, 103, 97, 101, 107, 108, 119, 87, 84, 95, 73, 55, 119];
         const _aK = String.fromCharCode(..._0xkey);
 
-        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${_aK}`;
+        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${_aK}`;
 
         const locationsContext = typeof locations !== 'undefined'
             ? JSON.stringify(locations.map(l => ({ id: l.id, name: l.name, region: l.region, hook: l.hook })))
             : '[]';
 
-        // KHẮC PHỤC LỖI: Bỏ qua tin nhắn chào hỏi ban đầu của AI (index == 0)
-        // để mảng lịch sử trò chuyện luôn được bắt đầu bằng tin nhắn của 'user'.
-        const chatHistory = this.messages
+        const rawHistory = this.messages
             .filter((m, i) => !(i === 0 && m.sender === 'AI')) 
             .map(m => ({
                 role: m.sender === 'User' ? 'user' : 'model',
-                parts: [{ text: m.text }]
+                text: m.text
             }));
+
+        const chatHistory = [];
+        for (const msg of rawHistory) {
+            const last = chatHistory[chatHistory.length - 1];
+            if (last && last.role === msg.role) {
+                last.parts[0].text += `\n\n${msg.text}`;
+            } else {
+                chatHistory.push({
+                    role: msg.role,
+                    parts: [{ text: msg.text }]
+                });
+            }
+        }
 
         let success = false;
         let aiReply = null;
@@ -132,7 +142,6 @@ Lưu ý: Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu, có th
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 15000);
 
-            // Cấu trúc Payload chuẩn cho API v1beta
             const payloadData = {
                 systemInstruction: {
                     parts: [{ text: `${this.systemPrompt}\n\nNgữ cảnh địa điểm:\n${locationsContext}` }]
@@ -152,7 +161,6 @@ Lưu ý: Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu, có th
 
             const data = await response.json();
 
-            // Nếu API báo lỗi, in ra lỗi cụ thể để catch bắt được
             if (!response.ok) {
                 throw new Error(data?.error?.message || "Lỗi kết nối từ phía Server");
             }
@@ -166,12 +174,13 @@ Lưu ý: Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu, có th
             console.error(`AI Error Details:`, err.message);
             this.updateStatus(false);
             
-            // Xử lý thông báo trực tiếp khi vượt quá Quota (limit)
-            if (err.message.includes('quota') || err.message.includes('429')) {
-                aiReply = "⚠️ Hệ thống đang có quá nhiều truy cập (vượt ngưỡng giới hạn miễn phí). Bạn hãy chờ khoảng 1 phút rồi hỏi lại nhé!";
-                success = true; // Set true để được parse định dạng html
+            const offlineResponse = this.getSmartResponse(userText);
+            
+            if (err.message.includes('quota') || err.message.includes('429') || err.message.includes('API Error')) {
+                aiReply = offlineResponse;
+                success = true; 
             } else {
-                aiReply = this.getSmartResponse(userText);
+                aiReply = offlineResponse;
             }
         }
 
@@ -208,17 +217,26 @@ Lưu ý: Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu, có th
     getSmartResponse(userText) {
         const lower = userText.toLowerCase();
         const locs = typeof locations !== 'undefined' ? locations : [];
-        const matched = locs.find(l => lower.includes(l.name.toLowerCase()));
+        
+        // 1. Xử lý lời chào
+        if (/chào|hello|hi|xin chào/.test(lower)) {
+            return `🌿 <b>Chào bạn!</b> Rất vui được gặp bạn.<br><br>Hiện tại tôi đang kết nối ở chế độ ngoại tuyến nhưng vẫn có thể giới thiệu cho bạn về các danh lam thắng cảnh Việt Nam. Bạn muốn tìm hiểu về nơi nào? (Ví dụ: <i>Vịnh Hạ Long, Hội An, Phú Quốc...</i>)`;
+        }
 
+        // 2. Tìm kiếm địa danh trong data
+        const matched = locs.find(l => lower.includes(l.name.toLowerCase()));
         if (matched) {
-            return `🏛️ <b>${matched.name}</b><br><br>📖 ${matched.description}<br><br>📍 Khu vực: <b>${matched.region}</b>`;
+            return `🏛️ <b>${matched.name}</b><br><br>${matched.description}<br><br>📍 Thuộc khu vực: <b>${matched.region}</b>. Bạn có muốn ghé thăm nơi này trên bản đồ 360° không?`;
         }
         
-        if (/danh sách|tất cả|có những/.test(lower)) {
-            return `🗺️ <b>Danh sách di sản:</b><br>${locs.slice(0, 10).map(l => `• ${l.name}`).join('<br>')}<br>...và nhiều nơi khác!`;
+        // 3. Xử lý câu hỏi về danh sách
+        if (/danh sách|tất cả|có những|địa danh nào/.test(lower)) {
+            const list = locs.slice(0, 8).map(l => `• ${l.name}`).join('<br>');
+            return `🗺️ <b>Tôi có thông tin của rất nhiều nơi tuyệt đẹp:</b><br><br>${list}<br>...và nhiều địa danh khác trên bản đồ.<br><br>Hãy gõ tên một nơi bạn thích nhé!`;
         }
 
-        return `🌿 Chào bạn! Hiện tại tôi đang chạy ở chế độ ngoại tuyến. Bạn có thể hỏi về các địa danh như: **Vịnh Hạ Long, Hà Nội, Hội An...** 🗺️`;
+        // 4. Phản hồi mặc định khi không hiểu
+        return `🌿 Hiện tại tôi đang tạm nghỉ ngơi một chút ở chế độ ngoại tuyến.<br><br>Bạn có thể hỏi tôi về những địa danh nổi tiếng như <b>Hà Nội, Vịnh Hạ Long, Cố đô Huế, Hội An hay Dinh Độc Lập...</b> để tôi có cơ hội được kể cho bạn nghe những câu chuyện thú vị về mảnh đất hình chữ S này nhé! 🇻🇳`;
     }
 }
 
