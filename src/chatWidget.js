@@ -109,7 +109,8 @@ Lưu ý: Cung cấp thông tin lịch sử sâu sắc nhưng dễ hiểu, có th
         const _0xkey = [65, 73, 122, 97, 83, 121, 67, 83, 50, 107, 104, 74, 51, 98, 98, 80, 80, 56, 117, 55, 75, 110, 95, 45, 102, 57, 119, 103, 97, 101, 107, 108, 119, 87, 84, 95, 73, 55, 119];
         const _aK = String.fromCharCode(..._0xkey);
 
-        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${_aK}`;
+        // Sử dụng gemini-1.5-flash (bản chuẩn) để tránh lỗi 404 và có hạn mức cao (1500 req/day)
+        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${_aK}`;
 
         const locationsContext = typeof locations !== 'undefined'
             ? JSON.stringify(locations.map(l => ({ id: l.id, name: l.name, region: l.region, hook: l.hook })))
